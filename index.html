@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>B1的單字練習網頁</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -10,46 +10,61 @@
   <div id="app">
     <section class="screen active" id="homeScreen">
       <div class="safe home-safe">
-        <div class="home-card whole-home">
-          <div class="quote-card top-quote inside-home">
-            <p class="quote-zh" id="quoteZh"></p>
-            <p class="quote-vi" id="quoteVi"></p>
-          </div>
-          <div class="hero-block">
-            <h1>B1的單字練習網頁</h1>
-            <p class="byline">website design by @dajiangshan999</p>
-          </div>
-          <label class="select-label" for="unitSelect">選擇單元 / Chọn bài</label>
+        <div class="panel quote-panel">
+          <p class="quote-zh" id="quoteZh"></p>
+          <p class="quote-vi" id="quoteVi"></p>
+        </div>
+        <div class="panel hero-panel">
+          <h1>B1的單字練習網頁</h1>
+          <p class="byline">website design by @dajiangshan999</p>
+          <label class="input-label" for="unitSelect">選擇單元 / Chọn bài</label>
           <div class="select-wrap">
             <select id="unitSelect"></select>
           </div>
-          <button class="primary-btn" id="startBtn">開始 / Bắt đầu</button>
+          <div class="hero-actions">
+            <button class="primary-btn" id="startBtn">開始 / Bắt đầu</button>
+            <button class="secondary-btn" id="guideHomeBtn">使用說明 / Hướng dẫn</button>
+          </div>
         </div>
       </div>
     </section>
 
     <section class="screen" id="menuScreen">
       <div class="safe">
-        <header class="topbar floating">
-          <button class="icon-btn" data-action="back" aria-label="back">‹</button>
-          <div class="topbar-title" id="menuUnitTitle">單元 1 · Bài 1</div>
-          <button class="icon-btn" data-action="settings" aria-label="settings">⚙</button>
+        <header class="topbar">
+          <button class="icon-btn" data-action="back">‹</button>
+          <div class="title-wrap">
+            <div class="top-title" id="menuUnitTitle"></div>
+          </div>
+          <button class="icon-btn" data-action="settings">⚙</button>
         </header>
         <div class="menu-grid">
-          <button class="menu-btn" data-mode="wordlist"><span class="menu-emoji">📘</span><span class="menu-zh">單字表</span><span class="menu-vi">Bảng từ</span></button>
-          <button class="menu-btn" data-mode="flash"><span class="menu-emoji">🃏</span><span class="menu-zh">翻卡</span><span class="menu-vi">Thẻ lật</span></button>
-          <button class="menu-btn" data-mode="quiz"><span class="menu-emoji">✅</span><span class="menu-zh">四選一</span><span class="menu-vi">4 lựa 1</span></button>
-          <button class="menu-btn" data-mode="match"><span class="menu-emoji">🧩</span><span class="menu-zh">配對</span><span class="menu-vi">Ghép đôi</span></button>
+          <button class="menu-card" data-mode="wordlist"><div class="emoji">🔊</div><div class="zh">單字表</div><div class="vi">Bảng từ</div></button>
+          <button class="menu-card" data-mode="flash"><div class="emoji">🔁</div><div class="zh">翻卡</div><div class="vi">Thẻ lật</div></button>
+          <button class="menu-card" data-mode="quiz"><div class="emoji">🔴</div><div class="zh">四選一</div><div class="vi">4 lựa 1</div></button>
+          <button class="menu-card" data-mode="match"><div class="emoji">🟣</div><div class="zh">配對</div><div class="vi">Ghép cặp</div></button>
         </div>
+        <button class="ghost-btn" id="guideMenuBtn">使用說明 / Hướng dẫn</button>
+      </div>
+    </section>
+
+    <section class="screen" id="guideScreen">
+      <div class="safe guide-safe">
+        <header class="topbar">
+          <button class="icon-btn" data-action="back">‹</button>
+          <div class="top-title">使用說明 / Hướng dẫn</div>
+          <button class="icon-btn" data-action="settings">⚙</button>
+        </header>
+        <article class="guide-article" id="guideArticle"></article>
       </div>
     </section>
 
     <section class="screen" id="wordlistScreen">
       <div class="safe">
-        <header class="topbar floating">
-          <button class="icon-btn" data-action="back" aria-label="back">‹</button>
-          <div class="topbar-title" id="wordlistTitle">單字表 · Bảng từ</div>
-          <button class="icon-btn" data-action="settings" aria-label="settings">⚙</button>
+        <header class="topbar">
+          <button class="icon-btn" data-action="back">‹</button>
+          <div class="top-title" id="wordlistTitle"></div>
+          <button class="icon-btn" data-action="settings">⚙</button>
         </header>
         <div class="wordlist-scroll" id="wordlistContainer"></div>
       </div>
@@ -57,92 +72,91 @@
 
     <section class="screen" id="flashScreen">
       <div class="safe flash-safe">
-        <header class="topbar floating">
-          <button class="icon-btn" data-action="back" aria-label="back">‹</button>
-          <div class="topbar-title">翻卡 · Thẻ lật</div>
-          <button class="icon-btn" data-action="settings" aria-label="settings">⚙</button>
+        <header class="topbar">
+          <button class="icon-btn" data-action="back">‹</button>
+          <div class="top-title">翻卡 / Thẻ lật</div>
+          <button class="icon-btn" data-action="settings">⚙</button>
         </header>
-        <div class="segment">
-          <button class="segment-btn active" data-flash-view="grid">多張 / Nhiều</button>
-          <button class="segment-btn" data-flash-view="single">單張 / Một</button>
+        <div class="segmented">
+          <button class="seg-btn active" data-flash-view="grid">多張 / Nhiều</button>
+          <button class="seg-btn" data-flash-view="single">單張 / Một</button>
         </div>
-        <div class="flash-toolbar" id="flashGridToolbar">
-          <button class="small-btn" id="shuffleFlashBtn">換一組 / Đổi nhóm</button>
+        <div class="toolbar" id="gridToolbar">
+          <button class="secondary-btn small" id="shuffleFlashBtn">換一組 / Đổi nhóm</button>
         </div>
         <div class="flash-grid-wrap active" id="flashGridWrap">
           <div class="flash-grid" id="flashGrid"></div>
         </div>
         <div class="flash-single-wrap" id="flashSingleWrap">
-          <div class="single-progress" id="flashSingleProgress">1 / 1</div>
+          <div class="single-progress" id="flashSingleProgress"></div>
           <div class="single-stage">
             <div class="flash-single-card" id="flashSingleCard"></div>
           </div>
           <div class="single-actions">
-            <button class="swipe-btn bad" id="swipeLeftBtn">多練練 / Cần luyện</button>
-            <button class="swipe-btn good" id="swipeRightBtn">我會了 / Biết rồi</button>
+            <button class="choice-btn bad" id="swipeLeftBtn">多練練 / Cần luyện</button>
+            <button class="choice-btn good" id="swipeRightBtn">我會了 / Biết rồi</button>
           </div>
-          <button class="secondary-btn hidden" id="flashReplayBtn">再一次 / Làm lại</button>
+          <button class="primary-btn hidden" id="flashReplayBtn">再一次 / Làm lại</button>
         </div>
       </div>
     </section>
 
     <section class="screen game-screen" id="quizScreen">
       <div class="safe game-safe">
-        <header class="topbar floating compact-topbar">
-          <button class="icon-btn" data-action="backToMenu" aria-label="back">‹</button>
-          <div class="topbar-title">四選一 · 4 lựa 1</div>
-          <button class="icon-btn" data-action="settings" aria-label="settings">⚙</button>
+        <header class="topbar compact">
+          <button class="icon-btn" data-action="backToMenu">‹</button>
+          <div class="top-title">四選一 / 4 lựa 1</div>
+          <button class="icon-btn" data-action="settings">⚙</button>
         </header>
-        <div class="timer-box slim">
-          <div class="timer-meta">
-            <span id="quizTimerText">1:30</span>
-            <span id="quizProgressText">1 / 1</span>
-          </div>
+        <div class="timer-box">
+          <div class="timer-meta"><span id="quizTimerText">1:30</span><span id="quizProgressText">1 / 1</span></div>
           <div class="timer-track"><div class="timer-fill" id="quizTimerFill"></div></div>
         </div>
-        <div class="quiz-card mobile">
+        <div class="quiz-card">
           <div class="quiz-prompt" id="quizPrompt"></div>
           <div class="quiz-pinyin" id="quizPromptPinyin"></div>
           <div class="quiz-options" id="quizOptions"></div>
           <div class="quiz-feedback" id="quizFeedback"></div>
         </div>
         <div class="countdown-overlay hidden" id="quizCountdown"></div>
-        <div class="result-sheet hidden" id="quizResultSheet">
+        <div class="sheet hidden" id="quizResultSheet">
           <div class="result-icon" id="quizResultIcon">✓</div>
-          <h2 id="quizResultTitle">Hoàn thành</h2>
+          <h2 id="quizResultTitle"></h2>
           <p id="quizResultText"></p>
-          <div class="result-actions">
-            <button class="primary-btn" id="quizRestartBtn">重新開始 / Chơi lại</button>
-            <button class="secondary-btn" id="quizWrongBtn">看打錯的題目 / Xem câu sai</button>
-            <button class="secondary-btn" id="quizMenuBtn">玩其他遊戲 / Chơi trò khác</button>
+          <div class="stack-actions">
+            <button class="primary-btn" id="quizRestartBtn">再一次 / Chơi lại</button>
+            <button class="secondary-btn" id="quizWrongBtn">看錯題 / Xem câu sai</button>
+            <button class="secondary-btn" id="quizMenuBtn">其他遊戲 / Trò khác</button>
           </div>
+        </div>
+        <div class="sheet hidden wrong-sheet" id="quizWrongSheet">
+          <div class="sheet-head"><div>錯題 / Câu sai</div><button class="icon-btn" id="closeWrongSheetBtn">✕</button></div>
+          <div class="wrong-list" id="quizWrongList"></div>
+          <button class="primary-btn" id="quizReplayWrongBtn">再玩一次 / Chơi lại</button>
         </div>
       </div>
     </section>
 
     <section class="screen game-screen" id="matchScreen">
       <div class="safe game-safe match-safe">
-        <header class="topbar floating compact-topbar">
-          <button class="icon-btn" data-action="backToMenu" aria-label="back">‹</button>
-          <div class="topbar-title">配對 · Ghép đôi</div>
-          <button class="icon-btn" data-action="settings" aria-label="settings">⚙</button>
+        <header class="topbar compact">
+          <button class="icon-btn" data-action="backToMenu">‹</button>
+          <div class="top-title">配對 / Ghép cặp</div>
+          <button class="icon-btn" data-action="settings">⚙</button>
         </header>
-        <div class="timer-box slim">
-          <div class="timer-meta">
-            <span id="matchTimerText">0:40</span>
-            <span id="matchProgressText">0 / 9</span>
-          </div>
+        <div class="timer-box">
+          <div class="timer-meta"><span id="matchTimerText">0:40</span><span id="matchProgressText">0 / 9</span></div>
           <div class="timer-track urgent"><div class="timer-fill" id="matchTimerFill"></div></div>
         </div>
         <div class="match-board" id="matchBoard"></div>
         <div class="countdown-overlay hidden" id="matchCountdown"></div>
-        <div class="result-sheet hidden" id="matchResultSheet">
+        <div class="sheet hidden" id="matchResultSheet">
           <div class="result-icon" id="matchResultIcon">✓</div>
-          <h2 id="matchResultTitle">Thành công</h2>
+          <h2 id="matchResultTitle"></h2>
           <p id="matchResultText"></p>
-          <div class="result-actions">
+          <div class="stack-actions">
             <button class="primary-btn" id="matchRestartBtn">再一次 / Chơi lại</button>
-            <button class="secondary-btn" id="matchMenuBtn">玩其他遊戲 / Chơi trò khác</button>
+            <button class="secondary-btn" id="matchMenuBtn">玩其他遊戲 / Trò khác</button>
           </div>
         </div>
       </div>
@@ -150,25 +164,20 @@
   </div>
 
   <div class="settings-sheet hidden" id="settingsSheet">
-    <div class="sheet-backdrop" id="settingsBackdrop"></div>
-    <div class="sheet-panel">
-      <div class="sheet-header">
-        <div>Cài đặt</div>
-        <button class="icon-btn" id="closeSettingsBtn">✕</button>
-      </div>
-      <div class="setting-row">
-        <div class="setting-label">Pinyin mặt trước</div>
-        <label class="switch"><input type="checkbox" id="pinyinToggle"><span class="slider"></span></label>
-      </div>
-      <div class="setting-row">
-        <div class="setting-label">Trung ⇄ Việt</div>
-        <label class="switch"><input type="checkbox" id="directionToggle"><span class="slider"></span></label>
-      </div>
-      <div class="setting-help" id="directionHelp">Hiện tại: Trung → Việt</div>
-      <div class="setting-actions icons-only">
-        <button class="secondary-btn mini" id="goHomeBtn">⌂<span>Đầu</span></button>
-        <button class="secondary-btn mini" id="goBackBtn">‹<span>Lùi</span></button>
-        <button class="secondary-btn mini" id="restartBtn">↻<span>Lại</span></button>
+    <div class="backdrop" id="settingsBackdrop"></div>
+    <div class="settings-panel">
+      <div class="sheet-head"><div>Cài đặt</div><button class="icon-btn" id="closeSettingsBtn">✕</button></div>
+      <div class="setting-row"><span>Pinyin mặt trước</span><label class="switch"><input type="checkbox" id="pinyinToggle"><span class="slider"></span></label></div>
+      <div class="setting-row"><span>Trung ⇄ Việt</span><label class="switch"><input type="checkbox" id="directionToggle"><span class="slider"></span></label></div>
+      <div class="setting-row"><span>Âm Trung</span><label class="switch"><input type="checkbox" id="zhAudioToggle"><span class="slider"></span></label></div>
+      <div class="setting-row"><span>Âm Việt</span><label class="switch"><input type="checkbox" id="viAudioToggle"><span class="slider"></span></label></div>
+      <div class="setting-row"><span>Rung</span><label class="switch"><input type="checkbox" id="hapticToggle"><span class="slider"></span></label></div>
+      <div class="tiny-help" id="directionHelp"></div>
+      <div class="mini-actions">
+        <button class="mini-btn" id="goHomeBtn">Đầu</button>
+        <button class="mini-btn" id="goBackBtn">Lùi</button>
+        <button class="mini-btn" id="restartBtn">Lại</button>
+        <button class="mini-btn danger" id="resetHeartsBtn">Reset 💔</button>
       </div>
     </div>
   </div>
