@@ -2,149 +2,175 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>B1 生詞 35 天練習</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>B1的單字練習網頁</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="app-shell">
-    <header class="hero">
-      <div class="hero-text">
-        <p class="eyebrow">B1 Vocabulary Practice</p>
-        <h1>B1 生詞 35 天練習<br><span>Luyện từ vựng B1 trong 35 ngày</span></h1>
-        <p class="subtitle">依照你上傳的 Excel 製作。學生可以按天練習單字表、矩陣翻卡、4選1測驗、配對遊戲。<br>Được tạo từ file Excel của bạn. Học viên có thể luyện theo từng ngày: danh sách từ, thẻ lật dạng lưới, trắc nghiệm 4 đáp án và trò chơi nối cặp.</p>
+  <div id="app">
+    <section class="screen active" id="homeScreen">
+      <div class="safe home-safe">
+        <div class="home-card">
+          <div class="home-badge">B1</div>
+          <h1>B1的單字練習網頁</h1>
+          <div class="quote-card">
+            <p class="quote-zh" id="quoteZh"></p>
+            <p class="quote-vi" id="quoteVi"></p>
+          </div>
+          <div class="select-wrap home-select-wrap">
+            <select id="unitSelect" aria-label="選擇單元"></select>
+          </div>
+          <button class="primary-btn hero-btn" id="startBtn">開始</button>
+        </div>
       </div>
-      <div class="hero-card">
-        <div class="stat"><strong id="totalDays">35</strong><span>天 / ngày</span></div>
-        <div class="stat"><strong id="totalWords">0</strong><span>單字 / từ vựng</span></div>
-        <div class="stat"><strong>4</strong><span>模式 / chế độ</span></div>
+    </section>
+
+    <section class="screen" id="menuScreen">
+      <div class="safe menu-safe">
+        <header class="topbar floating-bar">
+          <button class="icon-btn" data-action="home">⌂</button>
+          <div class="topbar-title" id="menuUnitTitle">單元 1</div>
+          <button class="icon-btn" data-action="settings">⚙</button>
+        </header>
+        <div class="menu-panel">
+          <div class="menu-grid">
+            <button class="menu-btn" data-mode="wordlist">單字表</button>
+            <button class="menu-btn" data-mode="flash">翻卡</button>
+            <button class="menu-btn" data-mode="quiz">選擇測驗</button>
+            <button class="menu-btn" data-mode="match">配對</button>
+          </div>
+        </div>
       </div>
-    </header>
+    </section>
 
-    <main>
-      <section class="panel" id="dayPickerPanel">
-        <div class="panel-head">
-          <div>
-            <h2>選擇天數 / Chọn ngày</h2>
-            <p>先選一天，再開始練習。Chọn một ngày trước khi bắt đầu.</p>
+    <section class="screen" id="wordlistScreen">
+      <div class="safe">
+        <header class="topbar floating-bar">
+          <button class="icon-btn" data-action="back">←</button>
+          <div class="topbar-title" id="wordlistTitle">單字表</div>
+          <button class="icon-btn" data-action="settings">⚙</button>
+        </header>
+        <div class="wordlist-scroll" id="wordlistContainer"></div>
+      </div>
+    </section>
+
+    <section class="screen" id="flashScreen">
+      <div class="safe">
+        <header class="topbar floating-bar">
+          <button class="icon-btn" data-action="back">←</button>
+          <div class="topbar-title">翻卡</div>
+          <button class="icon-btn" data-action="settings">⚙</button>
+        </header>
+        <div class="segment floating-segment">
+          <button class="segment-btn active" data-flash-view="grid">多張</button>
+          <button class="segment-btn" data-flash-view="single">單張</button>
+        </div>
+        <div class="flash-toolbar" id="flashGridToolbar">
+          <button class="small-btn" data-grid-size="8">8</button>
+          <button class="small-btn active" data-grid-size="12">12</button>
+          <button class="small-btn" data-grid-size="16">16</button>
+          <button class="small-btn fill-btn" id="shuffleFlashBtn">換一組</button>
+        </div>
+        <div class="flash-grid-wrap active" id="flashGridWrap">
+          <div class="flash-grid" id="flashGrid"></div>
+        </div>
+        <div class="flash-single-wrap" id="flashSingleWrap">
+          <div class="single-stage">
+            <div class="flash-single-card" id="flashSingleCard"></div>
           </div>
-          <div class="search-wrap">
-            <input id="daySearch" type="text" placeholder="搜尋天數或單字 / Tìm ngày hoặc từ" />
+          <div class="single-actions">
+            <button class="swipe-btn bad" id="swipeLeftBtn">再練習</button>
+            <button class="swipe-btn good" id="swipeRightBtn">我會了</button>
           </div>
         </div>
-        <div id="dayGrid" class="day-grid"></div>
-      </section>
+      </div>
+    </section>
 
-      <section class="panel hidden" id="studyPanel">
-        <div class="study-top">
-          <button class="ghost-btn" id="backBtn">← 回到天數選單 / Quay lại</button>
-          <div>
-            <h2 id="dayTitle">第 1 天 / Ngày 1</h2>
-            <p id="dayMeta"></p>
+    <section class="screen game-screen" id="quizScreen">
+      <div class="safe game-safe">
+        <header class="topbar floating-bar dark-bar">
+          <button class="icon-btn dark-btn" data-action="backToMenu">←</button>
+          <div class="topbar-title">選擇測驗</div>
+          <button class="icon-btn dark-btn" data-action="settings">⚙</button>
+        </header>
+        <div class="timer-box game-box">
+          <div class="timer-meta">
+            <span id="quizTimerText">1:30</span>
+            <span id="quizProgressText">0 題</span>
           </div>
-          <div class="top-actions">
-            <label class="toggle">
-              <input type="checkbox" id="pinyinToggle" checked />
-              <span>顯示拼音 / Hiện pinyin</span>
-            </label>
+          <div class="timer-track"><div class="timer-fill" id="quizTimerFill"></div></div>
+        </div>
+        <div class="quiz-card game-card">
+          <div class="quiz-prompt" id="quizPrompt"></div>
+          <div class="quiz-pinyin" id="quizPromptPinyin"></div>
+          <div class="quiz-options" id="quizOptions"></div>
+          <div class="quiz-feedback" id="quizFeedback"></div>
+        </div>
+        <div class="result-sheet hidden" id="quizResultSheet">
+          <div class="result-icon" id="quizResultIcon">✓</div>
+          <h2>完成了</h2>
+          <p id="quizResultText"></p>
+          <div class="result-actions">
+            <button class="primary-btn" id="quizRestartBtn">重新開始</button>
+            <button class="secondary-btn" id="quizWrongBtn">看打錯的題目</button>
+            <button class="secondary-btn" id="quizMenuBtn">玩其他遊戲</button>
           </div>
         </div>
+      </div>
+    </section>
 
-        <div class="tabs">
-          <button class="tab-btn active" data-tab="list">單字表 / Danh sách từ</button>
-          <button class="tab-btn" data-tab="flash">翻卡 / Flashcard</button>
-          <button class="tab-btn" data-tab="quiz">測驗 / Trắc nghiệm</button>
-          <button class="tab-btn" data-tab="pair">配對 / Nối cặp</button>
+    <section class="screen game-screen" id="matchScreen">
+      <div class="safe game-safe">
+        <header class="topbar floating-bar dark-bar">
+          <button class="icon-btn dark-btn" data-action="backToMenu">←</button>
+          <div class="topbar-title">配對</div>
+          <button class="icon-btn dark-btn" data-action="settings">⚙</button>
+        </header>
+        <div class="timer-box game-box">
+          <div class="timer-meta">
+            <span id="matchTimerText">0:40</span>
+            <span id="matchProgressText">0 / 9</span>
+          </div>
+          <div class="timer-track urgent"><div class="timer-fill" id="matchTimerFill"></div></div>
         </div>
-
-        <div class="tab-content active" id="tab-list">
-          <div class="toolbar">
-            <div class="chip-group">
-              <button class="chip active" data-list-filter="all">全部 / Tất cả</button>
-              <button class="chip" data-list-filter="review">只看錯題 / Chỉ xem từ sai</button>
-            </div>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>中文</th>
-                  <th>拼音</th>
-                  <th>越南文</th>
-                </tr>
-              </thead>
-              <tbody id="wordTableBody"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="tab-content" id="tab-flash">
-          <div class="toolbar wrap">
-            <div class="chip-group">
-              <button class="chip active" data-flash-mode="zh-vi">中文 → 越文</button>
-              <button class="chip" data-flash-mode="vi-zh">越文 → 中文</button>
-            </div>
-            <div class="chip-group">
-              <button class="chip active" data-flash-count="8">8 張</button>
-              <button class="chip" data-flash-count="12">12 張</button>
-              <button class="chip" data-flash-count="16">16 張</button>
-            </div>
-          </div>
-          <p class="helper">一次顯示多張卡。點一下某張卡，就翻到另一面。Hiển thị nhiều thẻ cùng lúc. Bấm vào từng thẻ để lật.</p>
-          <div id="flashGrid" class="flash-grid"></div>
-        </div>
-
-        <div class="tab-content" id="tab-quiz">
-          <div class="quiz-toolbar">
-            <div class="chip-group">
-              <button class="chip active" data-quiz-mode="zh-vi">中文 → 越文</button>
-              <button class="chip" data-quiz-mode="vi-zh">越文 → 中文</button>
-            </div>
-            <button class="ghost-btn" id="restartQuiz">重新開始 / Làm lại</button>
-          </div>
-
-          <div class="progress">
-            <div id="progressBar"></div>
-          </div>
-          <p id="quizStatus" class="helper"></p>
-
-          <div class="quiz-card">
-            <p class="quiz-label" id="quizDirection"></p>
-            <h3 id="quizQuestion"></h3>
-            <p id="quizQuestionPinyin" class="pinyin"></p>
-            <div id="quizOptions" class="quiz-options"></div>
-            <p id="quizFeedback" class="feedback"></p>
-            <div class="quiz-bottom">
-              <button class="ghost-btn" id="nextQuestion" disabled>下一題 / Câu tiếp theo</button>
-            </div>
+        <div class="match-board" id="matchBoard"></div>
+        <div class="countdown-overlay hidden" id="matchCountdown"></div>
+        <div class="result-sheet hidden" id="matchResultSheet">
+          <div class="result-icon" id="matchResultIcon">✓</div>
+          <h2 id="matchResultTitle">完成</h2>
+          <p id="matchResultText"></p>
+          <div class="result-actions">
+            <button class="primary-btn" id="matchRestartBtn">重新分牌</button>
+            <button class="secondary-btn" id="matchMenuBtn">玩其他遊戲</button>
           </div>
         </div>
+      </div>
+    </section>
+  </div>
 
-        <div class="tab-content" id="tab-pair">
-          <div class="toolbar wrap">
-            <div class="chip-group">
-              <button class="chip active" data-pair-size="4">4 組</button>
-              <button class="chip" data-pair-size="6">6 組</button>
-              <button class="chip" data-pair-size="8">8 組</button>
-            </div>
-            <button class="ghost-btn" id="restartPair">重新抽題 / Lấy bộ mới</button>
-          </div>
-          <div class="pair-header">
-            <div class="stat-mini">
-              <span>倒數 / Đếm ngược</span>
-              <strong id="pairTimer">60</strong>
-            </div>
-            <div class="stat-mini">
-              <span>已配對 / Đã nối</span>
-              <strong id="pairMatched">0 / 0</strong>
-            </div>
-          </div>
-          <p id="pairHint" class="helper">先點一個中文，再點對應的越南文。Bấm một thẻ tiếng Hoa rồi bấm thẻ tiếng Việt tương ứng.</p>
-          <div id="pairBoard" class="pair-board"></div>
-        </div>
-      </section>
-    </main>
+  <div class="settings-sheet hidden" id="settingsSheet">
+    <div class="sheet-backdrop" id="settingsBackdrop"></div>
+    <div class="sheet-panel">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <div>設定</div>
+        <button class="icon-btn" id="closeSettingsBtn">✕</button>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">顯示拼音</div>
+        <label class="switch"><input type="checkbox" id="pinyinToggle"><span class="slider"></span></label>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">中文 ⇄ 越文</div>
+        <label class="switch"><input type="checkbox" id="directionToggle"><span class="slider"></span></label>
+      </div>
+      <div class="setting-help" id="directionHelp">目前：中文 → 越文</div>
+      <div class="setting-actions">
+        <button class="secondary-btn" id="goHomeBtn">⌂</button>
+        <button class="secondary-btn" id="goBackBtn">←</button>
+        <button class="secondary-btn" id="restartBtn">↻</button>
+      </div>
+    </div>
   </div>
 
   <script src="data.js"></script>
