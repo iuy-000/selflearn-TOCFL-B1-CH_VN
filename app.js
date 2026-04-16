@@ -3,8 +3,8 @@ const storageKey = 'b1_mobile_app_v10_4';
 const data = window.APP_DATA;
 const appState = {
   currentUnit: 1,
-  currentScreen: 'homeScreen',
-  screenHistory: ['homeScreen'],
+  currentScreen: 'menuScreen',
+  screenHistory: ['menuScreen'],
   settings: {
     showPinyinFront: false,
     reverseDirection: false,
@@ -184,7 +184,7 @@ function showScreen(id,push=true){
   if(id === 'achievementScreen') renderAchievement();
 }
 function updateDock(id){
-  const map = {homeScreen:'home', menuScreen:'menu', achievementScreen:'achievement', helpScreen:'help'};
+  const map = {menuScreen:'menu', achievementScreen:'achievement', helpScreen:'help'};
   const active = map[id];
   $$('.dock-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.dock === active));
 }
@@ -192,10 +192,10 @@ function updateDock(id){
 function goBack(){
   closeSettings();
   if(appState.currentScreen === 'homeScreen') return;
-  if(appState.currentScreen === 'menuScreen') return showScreen('homeScreen');
+  if(appState.currentScreen === 'menuScreen') return showScreen('menuScreen', false);
   if(appState.currentScreen === 'quizScreen') stopQuiz();
   if(appState.currentScreen === 'matchScreen') stopMatch();
-  const prev = appState.screenHistory[appState.screenHistory.length-2] || 'homeScreen';
+  const prev = appState.screenHistory[appState.screenHistory.length-2] || 'menuScreen';
   appState.screenHistory.pop();
   showScreen(prev,false);
 }
@@ -719,24 +719,25 @@ function openBoarModal(img,title,text){
 function closeBoarModal(){ el.boarModal.classList.add('hidden'); }
 
 function bindEvents(){
-  $('#startBtn').onclick = () => {
+  const startBtn = $('#startBtn');
+  if(startBtn){ startBtn.onclick = () => {
     appState.currentUnit = Number(el.unitSelect.value);
     if(el.menuUnitSelect) el.menuUnitSelect.value = appState.currentUnit;
     renderMenu();
     showScreen('menuScreen');
-  };
+  }; }
   if(el.menuUnitSelect){ el.menuUnitSelect.onchange = () => { appState.currentUnit = Number(el.menuUnitSelect.value); renderMenu(); }; }
   $$('.dock-btn').forEach(btn => btn.onclick = () => {
-    const map = {home:'homeScreen', menu:'menuScreen', achievement:'achievementScreen', help:'helpScreen'};
+    const map = {menu:'menuScreen', achievement:'achievementScreen', help:'helpScreen'};
     if(btn.dataset.dock === 'help') renderHelp();
     showScreen(map[btn.dataset.dock]);
   });
-  $$('[data-action="home"]').forEach(b => b.onclick = () => showScreen('homeScreen'));
+  $$('[data-action="home"]').forEach(b => b.onclick = () => showScreen('menuScreen'));
   $$('[data-action="back"]').forEach(b => b.onclick = goBack);
   $$('[data-action="menu"]').forEach(b => b.onclick = () => { stopQuiz(); stopMatch(); showScreen('menuScreen'); });
   $$('[data-action="settings"]').forEach(b => b.onclick = openSettings);
   $('#closeSettingsBtn').onclick = $('#settingsBackdrop').onclick = closeSettings;
-  $('#goHomeBtn').onclick = () => { closeSettings(); showScreen('homeScreen'); };
+  $('#goHomeBtn').onclick = () => { closeSettings(); showScreen('menuScreen'); };
   $('#goBackBtn').onclick = goBack;
   $('#resetHeartsBtn').onclick = () => { appState.hearts = {}; saveState(); renderWordlist(); closeSettings(); };
 
@@ -833,5 +834,5 @@ renderHome();
 renderMenu();
 renderHelp();
 bindEvents();
-showScreen('homeScreen', false);
+showScreen('menuScreen', false);
 setInterval(updateStudyTime, 1000);
