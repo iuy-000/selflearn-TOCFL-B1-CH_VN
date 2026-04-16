@@ -1,177 +1,725 @@
-const state = {
-  units: window.APP_DATA.units,
-  quotes: window.APP_DATA.quotes || [],
+
+const storageKey = 'b1_mobile_app_v10_1';
+const data = window.APP_DATA;
+const appState = {
   currentUnit: 1,
   currentScreen: 'homeScreen',
-  screenStack: ['homeScreen'],
-  settings: loadSettings(),
-  flash: { view:'grid', currentGroup:[], singleQueue:[], singleIndex:0, singleFlipped:false, singleDone:false, dragX:0, dragActive:false },
-  quiz: { duration:90, remaining:90, timer:null, queue:[], index:0, current:null, score:0, wrongIds:[], wrongOnly:false, active:false },
-  match: { duration:40, remaining:40, timer:null, board:[], selected:null, active:false, pairsDone:0, roundHistory:[], currentRoundIds:[] },
-  mistakeMap: loadJSON('mistakeMap', {})
+  screenHistory: ['homeScreen'],
+  settings: {
+    showPinyinFront: false,
+    reverseDirection: false,
+    zhAudio: true,
+    viAudio: false,
+    haptic: true,
+  },
+  hearts: {},
+  today: initToday(),
+  quotes: data.quotes,
+  units: data.units,
+  flash: {
+    view: 'grid',
+    gridWords: [],
+    singleWords: [],
+    singleIndex: 0,
+    singleFlipped: false,
+    singleDone: false,
+    dragStartX: 0,
+    currentTranslate: 0,
+  },
+  quiz: {
+    duration: 120, remaining: 120, timer: null, queue: [], current: null, asked: 0, score: 0,
+    wrongItems: [], onlyWrong:false, active:false, difficulty:'normal'
+  },
+  match: {
+    duration: 40, remaining: 40, timer: null, board: [], selected: null, matched: 0,
+    active:false, roundHistory:[]
+  },
+  study: {
+    startedAt: Date.now(),
+    lastTick: Date.now(),
+    milestoneShown: false,
+  }
 };
-const el = {}; document.querySelectorAll('[id]').forEach(n=>el[n.id]=n);
-const guideZh = `
-<h2>📘 使用說明</h2>
-<h3>🎯 核心學習概念</h3>
-<p>👉 我們先讓大腦「熟悉」漢字的形狀<br>👉 用「視覺 + 聽覺」一起建立記憶<br>👉 讓學習變成可以每天持續的習慣</p>
-<h3>🧠 為什麼這樣學？</h3>
-<p>👉 先輸入知識（看、聽、認）<br>👉 再反覆使用（練習、測驗、反應）</p>
-<p>當這兩件事情不斷重複：<br>👉 就會慢慢變成「肌肉記憶」</p>
-<ul><li>不用想就認得字</li><li>不用翻譯就理解意思</li><li>自然地說出中文</li></ul>
-<h3>🚀 最終目標</h3>
-<p>希望透過這個練習，你可以在更短的時間內：<br>👉 更快認字<br>👉 更快理解<br>👉 更高效通過 TOCFL 考試</p>
-<h3>📚 關於 35 個單元</h3>
-<p>本系統分為 35 個單元。每一個單元都有一組單字，一次專注一個單元。</p>
-<p>💡 建議：每 2～5 天練一個單元，或依自己的速度調整。</p>
-<h3>🔁 練習方式</h3>
-<p><strong>🔊 單字表</strong><br>連結聲音與文字</p>
-<p><strong>🔁 翻卡</strong><br>反覆練習，建立記憶</p>
-<p><strong>🔴 四選一</strong><br>檢查自己是否記得</p>
-<p><strong>🟣 配對</strong><br>訓練反應速度</p>
-<p>將中文與越南文正確配對，有時間限制：訓練臨場感。配對成功會消失，全部在時間內配對完成即成功。</p>
-<h3>💔 心碎（錯題系統）</h3>
-<p>當你答錯時，會出現 💔。💔 越多，代表越不熟；答對後會慢慢減少。你也可以重新歸零，再測試自己。</p>
-<p>那些中文很好的人都是經過反覆練習的人，背後都有一個穩定的知識輸入庫。而這個 App，就是幫你建立這個輸入庫的工具。</p>
-<p>🌱 不用一次學很多，每天一點點就很好了。只要持續練習，你一定會越來越自然 😊</p>`;
-const guideVi = `
-<h2>📘 Hướng dẫn sử dụng</h2>
-<h3>🎯 Ý tưởng học tập cốt lõi</h3>
-<p>👉 Giúp bạn làm quen với hình dạng chữ Hán<br>👉 Kết hợp nhìn + nghe để ghi nhớ<br>👉 Biến việc học thành thói quen mỗi ngày</p>
-<h3>🧠 Vì sao học theo cách này?</h3>
-<p>👉 Tiếp nhận kiến thức (xem, nghe, nhận diện)<br>👉 Sau đó lặp lại và sử dụng (luyện tập, kiểm tra, phản xạ)</p>
-<p>Khi hai việc này lặp lại nhiều lần:<br>👉 Sẽ dần tạo thành trí nhớ phản xạ</p>
-<ul><li>Nhìn là nhận ra</li><li>Hiểu mà không cần dịch</li><li>Nói tiếng Trung tự nhiên hơn</li></ul>
-<h3>🚀 Mục tiêu cuối cùng</h3>
-<p>👉 Nhận chữ nhanh hơn<br>👉 Hiểu nhanh hơn<br>👉 Vượt qua kỳ thi TOCFL hiệu quả hơn</p>
-<h3>📚 Về 35 bài học</h3>
-<p>Hệ thống có 35 bài. Mỗi lần tập trung vào một bài.</p>
-<p>💡 Gợi ý: Học 1 bài trong 2–5 ngày, hoặc điều chỉnh theo tốc độ của bạn.</p>
-<h3>🔁 Cách luyện tập</h3>
-<p><strong>🔊 Bảng từ</strong><br>Kết nối âm thanh và chữ viết</p>
-<p><strong>🔁 Thẻ lật</strong><br>Lặp lại để ghi nhớ</p>
-<p><strong>🔴 4 lựa 1</strong><br>Kiểm tra xem bạn đã nhớ chưa</p>
-<p><strong>🟣 Ghép cặp</strong><br>Luyện phản xạ</p>
-<p>Ghép đúng tiếng Trung với tiếng Việt. Có giới hạn thời gian để tăng cảm giác phản xạ thực tế. Ghép đúng sẽ biến mất; hoàn thành tất cả trong thời gian quy định là thành công.</p>
-<h3>💔 Hệ thống lỗi sai</h3>
-<p>Khi bạn làm sai sẽ xuất hiện 💔. 💔 càng nhiều nghĩa là từ đó càng chưa quen; làm đúng sẽ giảm dần. Bạn cũng có thể đặt lại để tự kiểm tra lại từ đầu.</p>
-<p>Những người giỏi tiếng Trung đều đã luyện tập rất nhiều và có một kho kiến thức ổn định phía sau. App này chính là công cụ giúp bạn xây dựng kho đó.</p>
-<p>🌱 Không cần học quá nhiều một lúc. Mỗi ngày một chút là đủ. Chỉ cần tiếp tục luyện, bạn chắc chắn sẽ tiến bộ 😊</p>`;
 
-function loadJSON(key,fallback){try{return JSON.parse(localStorage.getItem(key)) ?? fallback}catch{return fallback}}
-function saveJSON(key,val){localStorage.setItem(key, JSON.stringify(val))}
-function loadSettings(){ return Object.assign({showPinyinFront:false, reverseDirection:false, zhAudio:true, viAudio:false, haptics:true}, loadJSON('settings', {})); }
-function saveSettings(){ saveJSON('settings', state.settings); }
-function shuffle(arr){ return [...arr].sort(()=>Math.random()-0.5); }
-function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
-function getUnit(n){ return state.units.find(u=>u.unit===n); }
-function words(){ return getUnit(state.currentUnit).words; }
-function mistakeCount(word){ return state.mistakeMap[word.id] || 0; }
-function heartText(word){ const c = mistakeCount(word); return c ? '💔'.repeat(Math.min(6,c)) : ''; }
-function markMistake(word){ state.mistakeMap[word.id] = (state.mistakeMap[word.id] || 0) + 1; saveJSON('mistakeMap', state.mistakeMap); }
-function markSuccess(word){ if(state.mistakeMap[word.id]){ state.mistakeMap[word.id]--; if(state.mistakeMap[word.id] <= 0) delete state.mistakeMap[word.id]; saveJSON('mistakeMap', state.mistakeMap); } }
-function frontOf(word){ return state.settings.reverseDirection ? word.vi : word.zh; }
-function backOf(word){ return state.settings.reverseDirection ? word.zh : word.vi; }
-function promptPinyin(word){ return !state.settings.reverseDirection ? word.pinyin || '' : ''; }
-function directionLabel(){ return state.settings.reverseDirection ? 'Việt → Trung' : 'Trung → Việt'; }
-function haptic(ms){ if(state.settings.haptics && navigator.vibrate) navigator.vibrate(ms); }
-function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
-function showScreen(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); if(state.currentScreen !== id){ state.screenStack.push(id); if(state.screenStack.length>20) state.screenStack.shift(); } state.currentScreen = id; closeSettings(); }
-function goBack(){ closeSettings(); if(state.currentScreen==='homeScreen') return; if(['quizScreen','matchScreen'].includes(state.currentScreen)){ stopQuiz(); stopMatch(); }
-  if(state.screenStack.length>1) state.screenStack.pop();
-  const prev = state.screenStack[state.screenStack.length-1] || 'homeScreen';
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(prev).classList.add('active'); state.currentScreen = prev;
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => [...document.querySelectorAll(sel)];
+
+const el = {
+  quoteZh: $('#quoteZh'),
+  quoteVi: $('#quoteVi'),
+  unitSelect: $('#unitSelect'),
+  startBtn: $('#startBtn'),
+  helpArticle: $('#helpArticle'),
+  wordlistContainer: $('#wordlistContainer'),
+  menuTitle: $('#menuTitle'),
+  flashGrid: $('#flashGrid'),
+  flashProgress: $('#flashProgress'),
+  flashSingleCard: $('#flashSingleCard'),
+  flashReplayBtn: $('#flashReplayBtn'),
+  quizTimerText: $('#quizTimerText'),
+  quizProgressText: $('#quizProgressText'),
+  quizTimerFill: $('#quizTimerFill'),
+  quizPrompt: $('#quizPrompt'),
+  quizPromptPinyin: $('#quizPromptPinyin'),
+  quizOptions: $('#quizOptions'),
+  quizFeedback: $('#quizFeedback'),
+  quizCountdown: $('#quizCountdown'),
+  quizResultSheet: $('#quizResultSheet'),
+  quizResultTitle: $('#quizResultTitle'),
+  quizResultText: $('#quizResultText'),
+  quizBoar: $('#quizBoar'),
+  matchCountdown: $('#matchCountdown'),
+  matchTimerText: $('#matchTimerText'),
+  matchProgressText: $('#matchProgressText'),
+  matchTimerFill: $('#matchTimerFill'),
+  matchBoard: $('#matchBoard'),
+  matchResultSheet: $('#matchResultSheet'),
+  matchResultTitle: $('#matchResultTitle'),
+  matchResultText: $('#matchResultText'),
+  matchBoar: $('#matchBoar'),
+  settingsSheet: $('#settingsSheet'),
+  pinyinToggle: $('#pinyinToggle'),
+  directionToggle: $('#directionToggle'),
+  zhAudioToggle: $('#zhAudioToggle'),
+  viAudioToggle: $('#viAudioToggle'),
+  hapticToggle: $('#hapticToggle'),
+  wrongModal: $('#wrongModal'),
+  wrongList: $('#wrongList'),
+  boarModal: $('#boarModal'),
+  boarModalImg: $('#boarModalImg'),
+  boarModalTitle: $('#boarModalTitle'),
+  boarModalText: $('#boarModalText'),
+  achievementBoar: $('#achievementBoar'),
+  todayStudyText: $('#todayStudyText'),
+  todayQuizCount: $('#todayQuizCount'),
+  todayMatchCount: $('#todayMatchCount'),
+  todayFlashCount: $('#todayFlashCount'),
+  quizRewardRow: $('#quizRewardRow'),
+  matchRewardRow: $('#matchRewardRow'),
+  flashRewardRow: $('#flashRewardRow'),
+  quizDifficultySheet: $('#quizDifficultySheet'),
+};
+
+function initToday(){
+  const now = new Date();
+  return {
+    date: now.toISOString().slice(0,10),
+    seconds: 0,
+    quizWins: 0,
+    matchWins: 0,
+    flashPlays: 0,
+  };
 }
-function speakUtter(text, lang){ return new Promise(resolve => { if(!('speechSynthesis' in window) || !text) return resolve(); const u=new SpeechSynthesisUtterance(text); u.lang=lang; u.rate = 0.92; const voices = speechSynthesis.getVoices(); const preferred = voices.find(v => lang.startsWith('zh') ? /zh|taiwan|mandarin/i.test((v.lang||'')+' '+(v.name||'')) : /vi/i.test((v.lang||'')+' '+(v.name||''))); if(preferred) u.voice = preferred; u.onend = () => resolve(); u.onerror = () => resolve(); speechSynthesis.speak(u); }); }
-async function speakBySettings(word, mode='context'){
-  if(!word) return; speechSynthesis.cancel();
-  if(mode==='wordlist'){
-    if(state.settings.viAudio && state.settings.zhAudio){ await speakUtter(word.vi, 'vi-VN'); await new Promise(r=>setTimeout(r,220)); await speakUtter(word.zh, 'zh-TW'); return; }
-    if(state.settings.viAudio){ await speakUtter(word.vi, 'vi-VN'); return; }
-    if(state.settings.zhAudio){ await speakUtter(word.zh, 'zh-TW'); return; }
+function loadState(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
+    if(saved.settings) Object.assign(appState.settings, saved.settings);
+    if(saved.hearts) appState.hearts = saved.hearts;
+    if(saved.today && saved.today.date === initToday().date) appState.today = saved.today;
+  }catch(e){}
+}
+function saveState(){
+  localStorage.setItem(storageKey, JSON.stringify({
+    settings: appState.settings,
+    hearts: appState.hearts,
+    today: appState.today
+  }));
+}
+function currentUnitObj(){ return appState.units.find(u => u.unit === appState.currentUnit); }
+function currentWords(){ return currentUnitObj().words; }
+function shuffle(arr){ const a=[...arr]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function sample(arr,n){ return shuffle(arr).slice(0, Math.min(n, arr.length)); }
+function frontText(word){ return appState.settings.reverseDirection ? word.vi : word.zh; }
+function frontPinyin(word){ return (!appState.settings.reverseDirection && appState.settings.showPinyinFront) ? word.pinyin : ''; }
+function backPrimary(word){ return appState.settings.reverseDirection ? word.zh : word.vi; }
+function answerText(word){ return appState.settings.reverseDirection ? word.zh : word.vi; }
+function promptText(word){ return appState.settings.reverseDirection ? word.vi : word.zh; }
+
+function showScreen(id,push=true){
+  stopSpeech();
+  $$('.screen').forEach(s => s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  if(push && appState.screenHistory[appState.screenHistory.length-1] !== id) appState.screenHistory.push(id);
+  appState.currentScreen = id;
+  if(id === 'achievementScreen') renderAchievement();
+}
+function goBack(){
+  closeSettings();
+  if(appState.currentScreen === 'homeScreen') return;
+  if(appState.currentScreen === 'menuScreen') return showScreen('homeScreen');
+  if(appState.currentScreen === 'quizScreen') stopQuiz();
+  if(appState.currentScreen === 'matchScreen') stopMatch();
+  const prev = appState.screenHistory[appState.screenHistory.length-2] || 'homeScreen';
+  appState.screenHistory.pop();
+  showScreen(prev,false);
+}
+
+function renderHome(){
+  const q = appState.quotes[Math.floor(Math.random()*appState.quotes.length)];
+  el.quoteZh.textContent = q.zh;
+  el.quoteVi.textContent = q.vi;
+  el.unitSelect.innerHTML = appState.units.map(u => `<option value="${u.unit}">${u.labelZh} / ${u.labelVi}</option>`).join('');
+  el.unitSelect.value = appState.currentUnit;
+}
+function renderMenu(){ el.menuTitle.textContent = `單元 ${appState.currentUnit} / Bài ${appState.currentUnit}`; }
+
+function renderHelp(){
+  const total = appState.units.reduce((sum, u) => sum + u.words.length, 0);
+  el.helpArticle.innerHTML = `
+    <h2>📘 Hướng dẫn sử dụng</h2>
+    <h3>📚 Về bài học</h3>
+    <p>Hệ thống này gồm tổng cộng <b>${total}</b> từ vựng TOCFL B1, được chia thành <b>35 bài</b> để bạn có thể luyện tập từng phần.</p>
+    <p>💡 Gợi ý: Mỗi ngày chỉ cần học khoảng <b>15 phút</b>, luyện tập thường xuyên sẽ hiệu quả hơn học trong thời gian dài.</p>
+    <div class="sep"></div>
+    <h3>🔁 Cách luyện tập</h3>
+    <p><b>🔊 Danh sách từ vựng</b><br/>Kết nối âm thanh và chữ viết. Nhấn vào từ để nghe phát âm và có thể đọc theo.</p>
+    <p><b>🃏 Lật thẻ</b><br/>Lặp lại để ghi nhớ. Từng thẻ để luyện nhận diện chữ; nhiều thẻ để luyện khả năng nhìn và nhận biết nhanh.</p>
+    <p><b>🧠 Trò chơi 4 lựa chọn</b><br/>Kiểm tra xem bạn đã nhớ chưa.</p>
+    <p><b>🧩 Ghép cặp</b><br/>Luyện phản xạ khi nhận diện từ trong bảng.</p>
+    <p><b>💔 Lỗi sai</b><br/>Khi bạn làm sai trong trò chơi, từ đó sẽ xuất hiện 💔. Càng nhiều 💔 nghĩa là bạn càng chưa quen. Làm đúng một lần sẽ giảm một 💔. Bạn cũng có thể vào “Cài đặt” để đặt lại 💔.</p>
+    <div class="sep"></div>
+    <h3>🧠 Vì sao học theo cách này?</h3>
+    <p>Trước tiên: tiếp nhận kiến thức (kết nối thị giác + thính giác + ý nghĩa). Sau đó: lặp lại và sử dụng (luyện tập, kiểm tra, phản xạ). Khi hai bước này lặp lại nhiều lần, sẽ hình thành trí nhớ tự nhiên.</p>
+    <h3>🚀 Mục tiêu</h3>
+    <p>Nhận chữ nhanh hơn, hiểu nhanh hơn, sử dụng tiếng Trung tự nhiên hơn và vượt qua kỳ thi TOCFL dễ dàng hơn.</p>
+    <h3>🌱 Cuối cùng</h3>
+    <p>Thành công sẽ không đến ngay lập tức, nhưng sẽ ngày càng đến gần hơn 😊</p>
+    <div class="sep"></div>
+    <h2>📘 使用說明</h2>
+    <h3>📚 關於單元</h3>
+    <p>這個系統整理了 TOCFL B1 的單字，總共 <b>${total}</b> 個，並分成 <b>35 個單元</b>，讓學生可以分批練習。</p>
+    <p>💡 建議：每天花約 <b>15 分鐘</b> 練習，高頻率的練習會比長時間練習更有效。</p>
+    <div class="sep"></div>
+    <h3>🔁 練習方式</h3>
+    <p><b>🔊 單字表</b><br/>連結聲音與文字。按單字會有發音，可以跟讀。</p>
+    <p><b>🃏 翻卡</b><br/>反覆練習，建立記憶。單張版本：練習認字；多張版本：練習瀏覽。</p>
+    <p><b>🧠 四選一</b><br/>檢查自己是否記得。</p>
+    <p><b>🧩 配對</b><br/>訓練在表格中出現單字時的反應速度。</p>
+    <p><b>💔 心碎（錯題）</b><br/>在遊戲中答錯會在單字表中出現 💔。越多代表越不熟；在遊戲中答對一次，就會減少一顆 💔；也可以在「設定」重新歸零 💔。</p>
+    <div class="sep"></div>
+    <h3>🧠 為什麼這樣學？</h3>
+    <p>先輸入知識（連結視覺、聽覺與理解），再反覆使用（練習、測驗、反應）。當這兩件事情不斷重複，就會慢慢形成肌肉記憶。</p>
+    <h3>🚀 最終目標</h3>
+    <p>更快認字、更快理解，更自然地使用中文，順利通過 TOCFL。</p>
+    <h3>🌱 最後</h3>
+    <p>成功不會馬上到來，但是會越來越靠近 😊</p>
+  `;
+}
+
+function heartCount(id){ return appState.hearts[id] || 0; }
+function heartMarkup(id){ const n = heartCount(id); return n ? `<span class="hearts">${'💔'.repeat(Math.min(n,5))}</span>` : ''; }
+function changeHeart(id, delta){ appState.hearts[id] = Math.max(0, (appState.hearts[id] || 0) + delta); saveState(); }
+function renderWordlist(){
+  el.wordlistContainer.innerHTML = currentWords().map(w => `
+    <button class="word-item card" data-speak-word="${w.id}">
+      <div class="word-head">
+        <div>
+          <div class="word-main">${w.zh} <span class="word-voice">🔊</span></div>
+          <div class="word-pinyin">${w.pinyin || ''}</div>
+          <div class="word-vi">${w.vi}</div>
+        </div>
+        ${heartMarkup(w.id)}
+      </div>
+    </button>
+  `).join('');
+}
+
+function buildFlashGrid(){
+  appState.flash.gridWords = sample(currentWords(), 16);
+}
+function renderFlash(){
+  $$('.seg-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.flashView === appState.flash.view));
+  $('#flashGridWrap').classList.toggle('active', appState.flash.view === 'grid');
+  $('#flashSingleWrap').classList.toggle('active', appState.flash.view === 'single');
+  if(appState.flash.view === 'grid'){
+    if(!appState.flash.gridWords.length) buildFlashGrid();
+    el.flashGrid.innerHTML = appState.flash.gridWords.map(w => `
+      <button class="flash-card" data-flash-id="${w.id}">
+        <div class="flash-card-inner">
+          <div class="flash-face front">
+            <div>
+              <div class="flash-main">${frontText(w)}</div>
+              <div class="flash-sub">${frontPinyin(w) || '&nbsp;'}</div>
+            </div>
+          </div>
+          <div class="flash-face back">
+            <div>
+              <div class="flash-main">${w.zh}</div>
+              <div class="flash-sub">${w.pinyin || ''}</div>
+              <div class="flash-sub">${w.vi}</div>
+            </div>
+          </div>
+        </div>
+      </button>
+    `).join('');
+  }else{
+    if(!appState.flash.singleWords.length || appState.flash.singleDone){
+      appState.flash.singleWords = shuffle(currentWords());
+      appState.flash.singleIndex = 0;
+      appState.flash.singleFlipped = false;
+      appState.flash.singleDone = false;
+      appState.today.flashPlays += 1; saveState();
+    }
+    renderFlashSingle();
+  }
+}
+function renderFlashSingle(){
+  const total = appState.flash.singleWords.length;
+  const i = appState.flash.singleIndex;
+  const w = appState.flash.singleWords[i];
+  if(!w){
+    appState.flash.singleDone = true;
+    el.flashReplayBtn.classList.remove('hidden');
+    el.flashProgress.textContent = `完成 / Hoàn thành`;
+    el.flashSingleCard.innerHTML = `<div class="front"><div class="single-main">完成了！</div><div class="single-sub">再一次 / Làm lại</div></div><div class="back"></div>`;
     return;
   }
-  const frontLangZh = !state.settings.reverseDirection;
-  if(frontLangZh && state.settings.zhAudio) await speakUtter(word.zh, 'zh-TW');
-  if(!frontLangZh && state.settings.viAudio) await speakUtter(word.vi, 'vi-VN');
+  el.flashReplayBtn.classList.add('hidden');
+  el.flashProgress.textContent = `${i+1} / ${total}`;
+  el.flashSingleCard.classList.toggle('flipped', appState.flash.singleFlipped);
+  el.flashSingleCard.style.transform = `translateX(${appState.flash.currentTranslate}px) rotate(${appState.flash.currentTranslate/18}deg)`;
+  el.flashSingleCard.innerHTML = `
+    <div class="front">
+      <div class="single-main">${frontText(w)}</div>
+      <div class="single-sub">${frontPinyin(w) || '&nbsp;'}</div>
+    </div>
+    <div class="back">
+      <div class="single-main">${w.zh}</div>
+      <div class="single-sub">${w.pinyin || ''}</div>
+      <div class="single-sub">${w.vi}</div>
+    </div>
+  `;
 }
-async function speakVisibleSide(word, flipped){
-  speechSynthesis.cancel();
-  const showingZh = flipped ? true : !state.settings.reverseDirection;
-  const showingVi = flipped ? true : state.settings.reverseDirection;
-  if(!flipped){
-    if(showingZh && state.settings.zhAudio) await speakUtter(word.zh,'zh-TW');
-    else if(showingVi && state.settings.viAudio) await speakUtter(word.vi,'vi-VN');
-  } else {
-    if(state.settings.zhAudio) await speakUtter(word.zh,'zh-TW');
-    if(state.settings.viAudio) await speakUtter(word.vi,'vi-VN');
+function resetFlashSingle(){
+  appState.flash.singleWords = shuffle(currentWords());
+  appState.flash.singleIndex = 0;
+  appState.flash.singleFlipped = false;
+  appState.flash.singleDone = false;
+  appState.flash.currentTranslate = 0;
+  renderFlashSingle();
+}
+function stepFlash(known){
+  const w = appState.flash.singleWords[appState.flash.singleIndex];
+  if(known && w) changeHeart(w.id, -1);
+  appState.flash.singleIndex += 1;
+  appState.flash.singleFlipped = false;
+  appState.flash.currentTranslate = 0;
+  renderFlashSingle();
+}
+function maybeSpeakFlashBack(word){
+  if(appState.settings.reverseDirection){
+    if(appState.settings.zhAudio) speakSequence([{text: word.zh, lang:'zh-TW'}]);
+  }else{
+    if(appState.settings.viAudio) speakSequence([{text: word.vi, lang:'vi-VN'}]);
   }
 }
-function populateHome(){ const q = state.quotes[Math.floor(Math.random()*state.quotes.length)] || {zh:'每天一點點，也很好。',vi:'Mỗi ngày một chút cũng rất tốt.'}; el.quoteZh.textContent=q.zh; el.quoteVi.textContent=q.vi; el.unitSelect.innerHTML=state.units.map(u=>`<option value="${u.unit}">單元 ${u.unit} / Bài ${u.unit}</option>`).join(''); el.unitSelect.value=String(state.currentUnit); }
-function renderGuide(){ el.guideArticle.innerHTML = guideZh + '<hr style="border:none;border-top:1px solid #ecdccc;margin:20px 0">' + guideVi; }
-function updateTitles(){ el.menuUnitTitle.textContent = `單元 ${state.currentUnit} / Bài ${state.currentUnit}`; el.wordlistTitle.textContent = `🔊 單字表 / Bảng từ`; }
-function renderWordlist(){ el.wordlistContainer.innerHTML = words().map(w=>`<button class="word-item" data-id="${w.id}"><div class="word-top"><div class="word-head"><span class="word-zh">${escapeHtml(w.zh)}</span><span class="sound-icon">🔊</span></div><div class="hearts">${heartText(w)}</div></div><div class="word-pinyin">${escapeHtml(w.pinyin||'')}</div><div class="word-vi">${escapeHtml(w.vi)}</div></button>`).join(''); }
-function openSettings(){ el.settingsSheet.classList.remove('hidden'); el.pinyinToggle.checked = state.settings.showPinyinFront; el.directionToggle.checked = state.settings.reverseDirection; el.zhAudioToggle.checked = state.settings.zhAudio; el.viAudioToggle.checked = state.settings.viAudio; el.hapticToggle.checked = state.settings.haptics; el.directionHelp.textContent = 'Hiện tại: ' + directionLabel(); }
+function toggleSingleFlip(){
+  const w = appState.flash.singleWords[appState.flash.singleIndex];
+  if(!w) return;
+  appState.flash.singleFlipped = !appState.flash.singleFlipped;
+  vibrate(15);
+  renderFlashSingle();
+  if(appState.flash.singleFlipped) setTimeout(()=>maybeSpeakFlashBack(w), 180);
+}
+
+
+function getQuizDuration(level){
+  return ({easy:150, normal:120, hard:90})[level] || 120;
+}
+function getQuizDifficultyLabel(level){
+  return ({easy:'簡單 / Dễ · 2:30', normal:'普通 / Vừa · 2:00', hard:'困難 / Khó · 1:30'})[level] || '普通 / Vừa · 2:00';
+}
+function openQuizDifficulty(){
+  el.quizDifficultySheet.classList.remove('hidden');
+}
+function closeQuizDifficulty(){
+  el.quizDifficultySheet.classList.add('hidden');
+}
+
+function buildQuizQueue(onlyWrong=false){
+  appState.quiz.queue = shuffle(onlyWrong ? currentWords().filter(w => heartCount(w.id)>0) : currentWords());
+  if(!appState.quiz.queue.length) appState.quiz.queue = shuffle(currentWords());
+  appState.quiz.current = null;
+  appState.quiz.asked = 0; appState.quiz.score = 0; appState.quiz.wrongItems=[]; appState.quiz.onlyWrong=onlyWrong;
+}
+function startQuiz(onlyWrong=false, difficulty=appState.quiz.difficulty || 'normal'){
+  stopMatch();
+  stopSpeech();
+  appState.quiz.difficulty = difficulty;
+  appState.quiz.duration = getQuizDuration(difficulty);
+  appState.today.quizWins += 1; saveState();
+  buildQuizQueue(onlyWrong);
+  appState.quiz.remaining = appState.quiz.duration;
+  appState.quiz.active = false;
+  el.quizResultSheet.classList.add('hidden');
+  el.quizCountdown.classList.remove('hidden');
+  showScreen('quizScreen');
+  countdown(el.quizCountdown, () => {
+    appState.quiz.active = true;
+    nextQuizQuestion();
+    tickQuiz();
+    appState.quiz.timer = setInterval(tickQuiz, 1000);
+  });
+}
+function tickQuiz(){
+  const pct = Math.max(0, appState.quiz.remaining / appState.quiz.duration);
+  el.quizTimerText.textContent = `${Math.floor(appState.quiz.remaining/60)}:${String(appState.quiz.remaining%60).padStart(2,'0')}`;
+  el.quizTimerFill.style.width = `${pct*100}%`;
+  el.quizTimerFill.classList.toggle('warn', appState.quiz.remaining <= 15);
+  el.quizTimerFill.classList.toggle('danger', appState.quiz.remaining <= 5);
+  el.quizTimerFill.classList.toggle('blink', appState.quiz.remaining <= 5);
+  if(appState.quiz.remaining <= 0) return finishQuiz();
+  appState.quiz.remaining -= 1;
+}
+function nextQuizQuestion(){
+  if(!appState.quiz.queue.length) return finishQuiz();
+  appState.quiz.current = appState.quiz.queue.shift();
+  appState.quiz.asked += 1;
+  const current = appState.quiz.current;
+  el.quizProgressText.textContent = `${appState.quiz.asked} / ${currentWords().length}`;
+  el.quizPrompt.textContent = promptText(current);
+  el.quizPromptPinyin.textContent = (!appState.settings.reverseDirection && appState.settings.showPinyinFront) ? current.pinyin : '';
+  el.quizFeedback.innerHTML = '';
+  const options = shuffle([current, ...sample(currentWords().filter(w => w.id !== current.id), 3)]);
+  el.quizOptions.innerHTML = options.map(w => `<button class="quiz-option" data-quiz="${w.id}">${answerText(w)}</button>`).join('');
+  speakPromptForCurrent(current);
+}
+function speakPromptForCurrent(word){
+  if(appState.settings.reverseDirection){
+    if(appState.settings.viAudio) speakSequence([{text: word.vi, lang:'vi-VN'}]);
+  }else{
+    if(appState.settings.zhAudio) speakSequence([{text: word.zh, lang:'zh-TW'}]);
+  }
+}
+function handleQuizAnswer(id){
+  if(!appState.quiz.active || !appState.quiz.current) return;
+  appState.quiz.active = false;
+  const word = appState.quiz.current;
+  const correct = id === word.id;
+  $$('.quiz-option').forEach(btn => {
+    if(btn.dataset.quiz === word.id) btn.classList.add('correct');
+    if(btn.dataset.quiz === id && id !== word.id) btn.classList.add('wrong');
+    btn.disabled = true;
+  });
+  if(correct){
+    appState.quiz.score += 1;
+    changeHeart(word.id, -1);
+    vibrate(18);
+    el.quizFeedback.innerHTML = `<div>答對了 / Đúng rồi</div>`;
+  }else{
+    changeHeart(word.id, +1);
+    appState.quiz.wrongItems.push(word);
+    vibrate([30,30,30]);
+    el.quizFeedback.innerHTML = `<div>答錯了 / Sai rồi</div><div>${word.zh}｜${word.vi}｜${word.pinyin}</div>`;
+  }
+  renderWordlist();
+  setTimeout(()=>{ appState.quiz.active = true; nextQuizQuestion(); }, 800);
+}
+function stopQuiz(){ if(appState.quiz.timer){ clearInterval(appState.quiz.timer); appState.quiz.timer = null; } appState.quiz.active = false; }
+function finishQuiz(){
+  stopQuiz();
+  const pass = appState.quiz.score >= Math.ceil(currentWords().length * 0.7);
+  el.quizBoar.src = pass ? 'assets/boar_happy.png' : 'assets/boar_sad.png';
+  el.quizResultTitle.textContent = pass ? 'Thành công / 成功' : 'Thất bại / 失敗';
+  el.quizResultText.textContent = `答對 ${appState.quiz.score} 題，共 ${currentWords().length} 題｜${getQuizDifficultyLabel(appState.quiz.difficulty)}`;
+  el.quizResultSheet.classList.remove('hidden');
+  saveState();
+}
+
+function selectMatchWords(pairCount=9){
+  const words = currentWords();
+  const wrongs = words.filter(w => heartCount(w.id) > 0).sort((a,b)=>heartCount(b.id)-heartCount(a.id));
+  const recent = new Set(appState.match.roundHistory.slice(-2).flat());
+  let picked = [];
+  picked.push(...wrongs.slice(0, pairCount));
+  if(picked.length < pairCount) picked.push(...sample(words.filter(w => !picked.some(p=>p.id===w.id) && !recent.has(w.id)), pairCount - picked.length));
+  if(picked.length < pairCount) picked.push(...sample(words.filter(w => !picked.some(p=>p.id===w.id)), pairCount - picked.length));
+  return picked.slice(0, pairCount);
+}
+function buildMatchBoard(){
+  const words = selectMatchWords(9);
+  appState.match.roundHistory.push(words.map(w=>w.id));
+  const zh = words.map(w=>({key:w.id+'_zh', pair:w.id, text:w.zh, type:'zh'}));
+  const vi = shuffle(words).map(w=>({key:w.id+'_vi', pair:w.id, text:w.vi, type:'vi'}));
+  appState.match.board = shuffle([...zh,...vi]);
+  appState.match.selected = null;
+  appState.match.matched = 0;
+}
+function renderMatch(){
+  el.matchBoard.innerHTML = appState.match.board.map(card => `
+    <button class="match-card ${card.type} ${card.selected?'selected':''} ${card.matched?'correct':''}" data-match="${card.key}">${card.text}</button>
+  `).join('');
+  el.matchProgressText.textContent = `${appState.match.matched} / 9`;
+}
+function startMatch(){
+  stopQuiz();
+  appState.today.matchWins += 1; saveState();
+  buildMatchBoard();
+  renderMatch();
+  appState.match.remaining = appState.match.duration;
+  appState.match.active = false;
+  el.matchResultSheet.classList.add('hidden');
+  showScreen('matchScreen');
+  el.matchCountdown.classList.remove('hidden');
+  countdown(el.matchCountdown, () => {
+    appState.match.active = true;
+    tickMatch();
+    appState.match.timer = setInterval(tickMatch, 1000);
+  });
+}
+function tickMatch(){
+  const pct = Math.max(0, appState.match.remaining / appState.match.duration);
+  el.matchTimerText.textContent = `0:${String(appState.match.remaining).padStart(2,'0')}`;
+  el.matchTimerFill.style.width = `${pct*100}%`;
+  el.matchTimerFill.classList.toggle('warn', appState.match.remaining <= 15);
+  el.matchTimerFill.classList.toggle('danger', appState.match.remaining <= 5);
+  el.matchTimerFill.classList.toggle('blink', appState.match.remaining <= 5);
+  if(appState.match.remaining <= 0) return finishMatch(false, true);
+  appState.match.remaining -= 1;
+}
+function stopMatch(){ if(appState.match.timer){ clearInterval(appState.match.timer); appState.match.timer=null; } appState.match.active=false; }
+function handleMatch(key){
+  if(!appState.match.active) return;
+  const card = appState.match.board.find(c=>c.key===key);
+  if(!card || card.matched) return;
+  if(!appState.match.selected){
+    appState.match.selected = card.key;
+    card.selected = true;
+    vibrate(12);
+    renderMatch(); return;
+  }
+  const first = appState.match.board.find(c=>c.key===appState.match.selected);
+  if(!first || first.key===card.key) return;
+  first.selected = false;
+  if(first.pair === card.pair && first.type !== card.type){
+    const wordId = card.pair;
+    changeHeart(wordId, -1);
+    first.matched = true; card.matched = true;
+    appState.match.matched += 1;
+    vibrate(18);
+    if(appState.match.matched === 9){ renderMatch(); return finishMatch(true,false); }
+  } else {
+    changeHeart(first.pair, +1);
+    changeHeart(card.pair, +1);
+    vibrate([30,30,30]);
+  }
+  appState.match.selected = null;
+  renderMatch();
+  renderWordlist();
+}
+function finishMatch(success, timeout){
+  stopMatch();
+  if(success){
+    el.matchBoar.src = 'assets/boar_happy.png';
+    el.matchResultTitle.textContent = '成功 / Thành công';
+    el.matchResultText.textContent = '山豬大王得到肉肉了！';
+  } else if(timeout){
+    el.matchBoar.src = 'assets/boar_tired.png';
+    el.matchResultTitle.textContent = '時間到 / Hết giờ';
+    el.matchResultText.textContent = '差一點！再試一次！';
+  } else {
+    el.matchBoar.src = 'assets/boar_sad.png';
+    el.matchResultTitle.textContent = '失敗 / Thất bại';
+    el.matchResultText.textContent = '沒關係，再試一次！';
+  }
+  el.matchResultSheet.classList.remove('hidden');
+  saveState();
+}
+
+function openWrongModal(){
+  const wrongs = appState.quiz.wrongItems;
+  el.wrongList.innerHTML = wrongs.length ? wrongs.map(w => `<div class="word-item card"><div class="word-main">${w.zh}</div><div class="word-pinyin">${w.pinyin}</div><div class="word-vi">${w.vi}</div></div>`).join('') : '<p>沒有錯題</p>';
+  el.wrongModal.classList.remove('hidden');
+}
+function closeWrongModal(){ el.wrongModal.classList.add('hidden'); }
+
+function openSettings(){
+  el.pinyinToggle.checked = appState.settings.showPinyinFront;
+  el.directionToggle.checked = appState.settings.reverseDirection;
+  el.zhAudioToggle.checked = appState.settings.zhAudio;
+  el.viAudioToggle.checked = appState.settings.viAudio;
+  el.hapticToggle.checked = appState.settings.haptic;
+  el.settingsSheet.classList.remove('hidden');
+}
 function closeSettings(){ el.settingsSheet.classList.add('hidden'); }
-function allWordsShuffled(){ const list=words(); const priority=list.filter(w=>mistakeCount(w)>0).sort((a,b)=>mistakeCount(b)-mistakeCount(a)); const rest=shuffle(list.filter(w=>!priority.some(p=>p.id===w.id))); return [...priority,...rest]; }
-function newFlashGroup(exclude=[]){ let pool = allWordsShuffled().filter(w=>!exclude.includes(w.id)); if(pool.length<16) pool = [...pool, ...shuffle(words().filter(w=>!pool.some(p=>p.id===w.id)))]; return shuffle(pool).slice(0,16); }
-function renderFlashGrid(){ if(!state.flash.currentGroup.length) state.flash.currentGroup = newFlashGroup(); el.flashGrid.innerHTML = state.flash.currentGroup.map(w=>`<button class="flash-card" data-id="${w.id}"><div class="flash-card-inner"><div class="flash-face"><div><div class="flash-main">${escapeHtml(frontOf(w))}</div>${(!state.settings.reverseDirection && state.settings.showPinyinFront)?`<div class="flash-sub">${escapeHtml(w.pinyin||'')}</div>`:''}</div></div><div class="flash-face flash-back"><div class="flash-main">${escapeHtml(w.zh)}</div><div class="flash-sub">${escapeHtml(w.pinyin||'')}</div><div class="flash-sub strong">${escapeHtml(w.vi)}</div></div></div></button>`).join(''); }
-function setupFlashSingle(){ state.flash.singleQueue = shuffle(words()); state.flash.singleIndex = 0; state.flash.singleFlipped = false; state.flash.singleDone = false; state.flash.dragX = 0; renderFlashSingle(); el.flashReplayBtn.classList.add('hidden'); }
-function currentSingle(){ return state.flash.singleQueue[state.flash.singleIndex]; }
-function renderFlashSingle(){ const w = currentSingle(); if(!w){ state.flash.singleDone = true; el.flashSingleProgress.textContent = `${state.flash.singleQueue.length} / ${state.flash.singleQueue.length}`; el.flashSingleCard.innerHTML = '<div class="flash-main">完成了</div><div class="flash-sub">Hoàn thành</div>'; el.flashSingleCard.style.transform = 'translateX(0px) rotate(0deg)'; el.flashReplayBtn.classList.remove('hidden'); return; } el.flashSingleProgress.textContent = `${state.flash.singleIndex+1} / ${state.flash.singleQueue.length}`; const front = `<div class="flash-main">${escapeHtml(frontOf(w))}</div>${(!state.settings.reverseDirection && state.settings.showPinyinFront)?`<div class="flash-sub">${escapeHtml(w.pinyin||'')}</div>`:''}`; const back = `<div class="flash-main">${escapeHtml(w.zh)}</div><div class="flash-sub">${escapeHtml(w.pinyin||'')}</div><div class="flash-sub strong">${escapeHtml(w.vi)}</div>`; el.flashSingleCard.innerHTML = state.flash.singleFlipped ? back : front; const rot = clamp(state.flash.dragX/18,-12,12); el.flashSingleCard.style.transform = `translateX(${state.flash.dragX}px) rotate(${rot}deg)`; if(!state.flash.dragActive) speakVisibleSide(w, state.flash.singleFlipped); }
-function switchFlashView(v){ state.flash.view=v; document.querySelectorAll('[data-flash-view]').forEach(b=>b.classList.toggle('active', b.dataset.flashView===v)); el.flashGridWrap.classList.toggle('active', v==='grid'); el.flashSingleWrap.classList.toggle('active', v==='single'); el.gridToolbar.classList.toggle('hidden', v!=='grid'); if(v==='grid'){ state.flash.currentGroup = newFlashGroup(state.flash.currentGroup.map(w=>w.id)); renderFlashGrid(); } else { setupFlashSingle(); } }
-function advanceSingle(known){ const w=currentSingle(); if(!w) return; if(known) { markSuccess(w); haptic(20); } else { markMistake(w); haptic([40,30,40]); } renderWordlist(); state.flash.singleIndex += 1; state.flash.singleFlipped=false; state.flash.dragX=0; state.flash.dragActive=false; renderFlashSingle(); }
-function startQuiz(wrongOnly=false){ state.quiz = { duration:90, remaining:90, timer:null, queue: buildQuizQueue(wrongOnly), index:0, current:null, score:0, wrongIds:[], wrongOnly, active:false }; el.quizResultSheet.classList.add('hidden'); el.quizWrongSheet.classList.add('hidden'); showScreen('quizScreen'); runCountdown(el.quizCountdown).then(()=>{ state.quiz.active=true; tickQuiz(); state.quiz.timer=setInterval(tickQuiz,1000); renderQuizQuestion(); }); }
-function buildQuizQueue(wrongOnly){ const list = wrongOnly ? words().filter(w=>mistakeCount(w)>0) : words(); return shuffle(list.length ? list : words()); }
-function tickQuiz(){ const pct=Math.max(0,state.quiz.remaining/state.quiz.duration); el.quizTimerFill.style.width = `${pct*100}%`; el.quizTimerText.textContent = `${Math.floor(state.quiz.remaining/60)}:${String(state.quiz.remaining%60).padStart(2,'0')}`; if(state.quiz.remaining<=0) return finishQuiz(false); state.quiz.remaining--; }
-function quizOptionsFor(w){ const others=shuffle(words().filter(x=>x.id!==w.id)).slice(0,3); return shuffle([w,...others]); }
-function renderQuizQuestion(){ if(state.quiz.index >= state.quiz.queue.length) return finishQuiz(true); const w = state.quiz.queue[state.quiz.index]; state.quiz.current = w; el.quizProgressText.textContent = `${state.quiz.index+1} / ${state.quiz.queue.length}`; el.quizPrompt.textContent = frontOf(w); el.quizPromptPinyin.textContent = promptPinyin(w); speakBySettings(w,'context'); const opts=quizOptionsFor(w); el.quizOptions.innerHTML = opts.map(o=>`<button class="quiz-option" data-id="${o.id}">${escapeHtml(backOf(o))}</button>`).join(''); el.quizFeedback.innerHTML=''; }
-function answerQuiz(id){ if(!state.quiz.active || !state.quiz.current) return; state.quiz.active=false; const w=state.quiz.current; const correct = id===w.id; document.querySelectorAll('.quiz-option').forEach(btn=>{ btn.disabled=true; if(btn.dataset.id===w.id) btn.classList.add('correct'); if(btn.dataset.id===id && !correct) btn.classList.add('wrong'); }); if(correct){ state.quiz.score++; markSuccess(w); haptic(22); el.quizFeedback.innerHTML = `<div>✔ 答對 / Đúng</div><div>${escapeHtml(w.zh)} · ${escapeHtml(w.vi)}</div>`; } else { markMistake(w); state.quiz.wrongIds.push(w.id); haptic([50,35,50]); el.quizFeedback.innerHTML = `<div class="feedback-heart">💔</div><div>❌ 答錯 / Sai</div><div>${escapeHtml(w.zh)} ｜ ${escapeHtml(w.vi)}</div><div>${escapeHtml(w.pinyin||'')}</div>`; } renderWordlist(); setTimeout(()=>{ state.quiz.index++; state.quiz.active=true; renderQuizQuestion(); }, 800); }
-function stopQuiz(){ if(state.quiz.timer){ clearInterval(state.quiz.timer); state.quiz.timer=null; } state.quiz.active=false; }
-function finishQuiz(successByComplete){ stopQuiz(); const success = successByComplete && state.quiz.index >= state.quiz.queue.length; el.quizResultSheet.classList.remove('hidden'); el.quizResultIcon.textContent = success ? '✓' : '✕'; el.quizResultTitle.textContent = success ? 'Thành công / 成功' : 'Thất bại / 失敗'; el.quizResultText.textContent = `Đúng ${state.quiz.score} / ${state.quiz.queue.length}`; }
-function openWrongSheet(){ const ids = [...new Set(state.quiz.wrongIds)]; const list = words().filter(w=>ids.includes(w.id)); el.quizWrongList.innerHTML = list.length ? list.map(w=>`<div class="wrong-item"><div><strong>${escapeHtml(w.zh)}</strong> ${heartText(w)}</div><div>${escapeHtml(w.vi)}</div><div>${escapeHtml(w.pinyin||'')}</div></div>`).join('') : '<div class="wrong-item">沒有錯題 / Không có câu sai</div>'; el.quizWrongSheet.classList.remove('hidden'); }
-function buildMatchRound(excludeCurrent=false){ const exclude = new Set(excludeCurrent ? state.match.currentRoundIds : []); const source = words(); const high = source.filter(w=>mistakeCount(w)>0 && !exclude.has(w.id)).sort((a,b)=>mistakeCount(b)-mistakeCount(a)); const lastTwo = new Set(state.match.roundHistory.flat()); const fresh = shuffle(source.filter(w=>!exclude.has(w.id) && !lastTwo.has(w.id) && !high.some(h=>h.id===w.id))); const rest = shuffle(source.filter(w=>!exclude.has(w.id) && !high.some(h=>h.id===w.id) && !fresh.some(f=>f.id===w.id))); let chosen = [...high, ...fresh, ...rest].slice(0,9); if(chosen.length<9) chosen = [...chosen, ...shuffle(source.filter(w=>!chosen.some(c=>c.id===w.id)))].slice(0,9); state.match.currentRoundIds = chosen.map(w=>w.id); state.match.roundHistory.push(state.match.currentRoundIds); state.match.roundHistory = state.match.roundHistory.slice(-2); state.match.board = shuffle(chosen.flatMap(w => [{pairId:w.id, text:w.zh, lang:'zh', word:w, matched:false},{pairId:w.id, text:w.vi, lang:'vi', word:w, matched:false}])); state.match.selected = null; state.match.pairsDone = 0; renderMatchBoard(); }
-function renderMatchBoard(){ el.matchBoard.innerHTML = state.match.board.map((c,i)=>`<button class="match-card ${c.lang} ${c.matched?'matched':''}" data-idx="${i}">${c.matched?'':escapeHtml(c.text)}</button>`).join(''); el.matchProgressText.textContent = `${state.match.pairsDone} / 9`; }
-function startMatch(excludeCurrent=false){ stopMatch(); state.match.remaining=40; el.matchResultSheet.classList.add('hidden'); buildMatchRound(excludeCurrent); showScreen('matchScreen'); runCountdown(el.matchCountdown).then(()=>{ state.match.active=true; tickMatch(); state.match.timer=setInterval(tickMatch,1000); }); }
-function stopMatch(){ if(state.match.timer){ clearInterval(state.match.timer); state.match.timer=null; } state.match.active=false; }
-function tickMatch(){ const pct=Math.max(0,state.match.remaining/state.match.duration); el.matchTimerFill.style.width = `${pct*100}%`; el.matchTimerText.textContent = `0:${String(state.match.remaining).padStart(2,'0')}`; el.matchTimerFill.classList.remove('warn','danger','blink'); if(state.match.remaining<=15) el.matchTimerFill.classList.add('warn'); if(state.match.remaining<=5) el.matchTimerFill.classList.add('danger','blink'); if(state.match.remaining<=0) return finishMatch(false); state.match.remaining--; }
-function tapMatch(idx){ if(!state.match.active) return; const card = state.match.board[idx]; if(!card || card.matched) return; if(state.match.selected===null){ state.match.selected=idx; renderSelection(); return; } if(state.match.selected===idx){ state.match.selected=null; renderSelection(); return; } const first = state.match.board[state.match.selected]; if(first.pairId===card.pairId && first.lang!==card.lang){ first.matched=true; card.matched=true; state.match.pairsDone++; markSuccess(first.word); haptic(18); state.match.selected=null; renderWordlist(); renderMatchBoard(); if(state.match.pairsDone===9) finishMatch(true); } else { markMistake(first.word); markMistake(card.word); renderWordlist(); haptic([50,35,50]); const btns=document.querySelectorAll('.match-card'); [state.match.selected, idx].forEach(i=>btns[i]?.classList.add('wrong')); state.match.selected=null; setTimeout(renderMatchBoard, 420); } }
-function renderSelection(){ document.querySelectorAll('.match-card').forEach((b,i)=>b.classList.toggle('selected', i===state.match.selected)); }
-function finishMatch(success){ stopMatch(); el.matchResultSheet.classList.remove('hidden'); el.matchResultIcon.textContent = success ? '✓' : '✕'; el.matchResultTitle.textContent = success ? 'Thành công / 成功' : 'Thất bại / 失敗'; el.matchResultText.textContent = success ? '全部配對完成 / Hoàn thành đủ 9 cặp' : `Đúng ${state.match.pairsDone} / 9`; }
-function runCountdown(node){ node.classList.remove('hidden'); return new Promise(resolve=>{ const nums=['3','2','1']; let i=0; node.textContent=nums[0]; const timer=setInterval(()=>{ i++; if(i>=nums.length){ clearInterval(timer); node.classList.add('hidden'); resolve(); } else node.textContent=nums[i]; }, 700); }); }
-function restartCurrent(){ if(state.currentScreen==='wordlistScreen') renderWordlist(); if(state.currentScreen==='flashScreen'){ state.flash.view==='grid' ? (state.flash.currentGroup = newFlashGroup(state.flash.currentGroup.map(w=>w.id)), renderFlashGrid()) : setupFlashSingle(); } if(state.currentScreen==='quizScreen') startQuiz(state.quiz.wrongOnly); if(state.currentScreen==='matchScreen') startMatch(true); }
-function bindDrag(){ const card = el.flashSingleCard; let sx=0;
-  card.addEventListener('pointerdown', e=>{ if(state.flash.singleDone) return; state.flash.dragActive=true; sx=e.clientX; card.setPointerCapture(e.pointerId); });
-  card.addEventListener('pointermove', e=>{ if(!state.flash.dragActive) return; state.flash.dragX = e.clientX - sx; renderFlashSingle(); });
-  function endDrag(){ if(!state.flash.dragActive) return; const dx=state.flash.dragX; state.flash.dragActive=false; if(Math.abs(dx)>90){ advanceSingle(dx>0); } else { state.flash.dragX=0; renderFlashSingle(); } }
-  card.addEventListener('pointerup', endDrag); card.addEventListener('pointercancel', endDrag);
+
+function countdown(target, done){
+  let n = 3;
+  target.textContent = '3';
+  const t = setInterval(()=>{
+    n -= 1;
+    if(n === 0){ target.textContent = '1'; return; }
+    if(n === -1){ target.textContent = '開始'; return; }
+    if(n < -1){ clearInterval(t); target.classList.add('hidden'); done(); return; }
+    target.textContent = String(n);
+  }, 700);
 }
-function bind(){
-  el.startBtn.addEventListener('click', ()=>{ state.currentUnit=Number(el.unitSelect.value); updateTitles(); showScreen('menuScreen'); });
-  el.guideHomeBtn.addEventListener('click', ()=> showScreen('guideScreen'));
-  el.guideMenuBtn.addEventListener('click', ()=> showScreen('guideScreen'));
-  document.querySelectorAll('[data-action]').forEach(btn=>btn.addEventListener('click', ()=>{ const a=btn.dataset.action; if(a==='back') goBack(); if(a==='backToMenu'){ stopQuiz(); stopMatch(); showScreen('menuScreen'); } if(a==='settings') openSettings(); }));
-  document.querySelectorAll('[data-mode]').forEach(btn=>btn.addEventListener('click', ()=>{ const mode=btn.dataset.mode; if(mode==='wordlist'){ renderWordlist(); showScreen('wordlistScreen'); } if(mode==='flash'){ switchFlashView('grid'); showScreen('flashScreen'); } if(mode==='quiz') startQuiz(false); if(mode==='match') startMatch(false); }));
-  el.settingsBackdrop.addEventListener('click', closeSettings); el.closeSettingsBtn.addEventListener('click', closeSettings);
-  el.pinyinToggle.addEventListener('change', e=>{ state.settings.showPinyinFront=e.target.checked; saveSettings(); if(state.currentScreen==='flashScreen'){ state.flash.view==='grid'?renderFlashGrid():renderFlashSingle(); } });
-  el.directionToggle.addEventListener('change', e=>{ state.settings.reverseDirection=e.target.checked; saveSettings(); el.directionHelp.textContent='Hiện tại: '+directionLabel(); if(state.currentScreen==='flashScreen'){ state.flash.view==='grid'?renderFlashGrid():renderFlashSingle(); } if(state.currentScreen==='quizScreen' && state.quiz.current) renderQuizQuestion(); });
-  el.zhAudioToggle.addEventListener('change', e=>{ state.settings.zhAudio=e.target.checked; saveSettings(); });
-  el.viAudioToggle.addEventListener('change', e=>{ state.settings.viAudio=e.target.checked; saveSettings(); });
-  el.hapticToggle.addEventListener('change', e=>{ state.settings.haptics=e.target.checked; saveSettings(); });
-  el.goHomeBtn.addEventListener('click', ()=>{ stopQuiz(); stopMatch(); populateHome(); state.screenStack=['homeScreen']; showScreen('homeScreen'); });
-  el.goBackBtn.addEventListener('click', goBack);
-  el.restartBtn.addEventListener('click', ()=>{ closeSettings(); restartCurrent(); });
-  el.resetHeartsBtn.addEventListener('click', ()=>{ state.mistakeMap={}; saveJSON('mistakeMap', state.mistakeMap); renderWordlist(); closeSettings(); });
-  el.wordlistContainer.addEventListener('click', e=>{ const item=e.target.closest('.word-item'); if(!item) return; const w=words().find(x=>x.id===item.dataset.id); speakBySettings(w,'wordlist'); haptic(10); });
-  document.querySelectorAll('[data-flash-view]').forEach(btn=>btn.addEventListener('click', ()=>switchFlashView(btn.dataset.flashView)));
-  el.shuffleFlashBtn.addEventListener('click', ()=>{ state.flash.currentGroup = newFlashGroup(state.flash.currentGroup.map(w=>w.id)); renderFlashGrid(); haptic(10); });
-  el.flashGrid.addEventListener('click', e=>{ const card=e.target.closest('.flash-card'); if(!card) return; card.classList.toggle('flipped'); const w=state.flash.currentGroup.find(x=>x.id===card.dataset.id); haptic(10); speakVisibleSide(w, card.classList.contains('flipped')); });
-  el.flashSingleCard.addEventListener('click', ()=>{ if(state.flash.dragActive || state.flash.singleDone || Math.abs(state.flash.dragX)>5) return; state.flash.singleFlipped=!state.flash.singleFlipped; renderFlashSingle(); haptic(10); });
-  el.swipeLeftBtn.addEventListener('click', ()=>advanceSingle(false)); el.swipeRightBtn.addEventListener('click', ()=>advanceSingle(true)); el.flashReplayBtn.addEventListener('click', setupFlashSingle);
-  el.quizOptions.addEventListener('click', e=>{ const btn=e.target.closest('.quiz-option'); if(btn) answerQuiz(btn.dataset.id); });
-  el.quizRestartBtn.addEventListener('click', ()=>startQuiz(false)); el.quizWrongBtn.addEventListener('click', openWrongSheet); el.quizMenuBtn.addEventListener('click', ()=>{ stopQuiz(); showScreen('menuScreen'); }); el.closeWrongSheetBtn.addEventListener('click', ()=>{ el.quizWrongSheet.classList.add('hidden'); showScreen('menuScreen'); }); el.quizReplayWrongBtn.addEventListener('click', ()=>{ el.quizWrongSheet.classList.add('hidden'); startQuiz(true); });
-  el.matchBoard.addEventListener('click', e=>{ const btn=e.target.closest('.match-card'); if(btn) tapMatch(Number(btn.dataset.idx)); });
-  el.matchRestartBtn.addEventListener('click', ()=>startMatch(true)); el.matchMenuBtn.addEventListener('click', ()=>{ stopMatch(); showScreen('menuScreen'); });
-  bindDrag();
+
+function speakSequence(items){
+  if(!('speechSynthesis' in window)) return;
+  stopSpeech();
+  let delay = 0;
+  items.forEach(item => {
+    if(!item.text) return;
+    const u = new SpeechSynthesisUtterance(item.text);
+    u.lang = item.lang;
+    u.rate = 0.9;
+    setTimeout(()=>window.speechSynthesis.speak(u), delay);
+    delay += 380;
+  });
 }
-populateHome(); renderGuide(); updateTitles(); bind();
+function stopSpeech(){ if('speechSynthesis' in window) window.speechSynthesis.cancel(); }
+function speakWordlist(word){
+  const items = [];
+  if(appState.settings.viAudio) items.push({text: word.vi, lang:'vi-VN'});
+  if(appState.settings.zhAudio) items.push({text: word.zh, lang:'zh-TW'});
+  speakSequence(items);
+}
+function vibrate(pattern){ if(appState.settings.haptic && navigator.vibrate) navigator.vibrate(pattern); }
+
+function updateStudyTime(){
+  const now = Date.now();
+  const todayDate = initToday().date;
+  if(appState.today.date !== todayDate){ appState.today = initToday(); appState.study.milestoneShown = false; saveState(); }
+  const delta = Math.min(5, Math.floor((now - appState.study.lastTick)/1000));
+  if(delta > 0){ appState.today.seconds += delta; appState.study.lastTick = now; saveState(); }
+  const mins = Math.floor(appState.today.seconds / 60);
+  if(mins >= 15 && !appState.study.milestoneShown){
+    appState.study.milestoneShown = true;
+    openBoarModal('assets/boar_proud.png','山豬大王','今天學習了15分鐘了！你好棒！');
+  }
+}
+function renderAchievement(){
+  const mins = Math.floor(appState.today.seconds / 60);
+  el.todayStudyText.textContent = `本日學習 ${mins} 分鐘`;
+  el.todayQuizCount.textContent = `${appState.today.quizWins} 次`;
+  el.todayMatchCount.textContent = `${appState.today.matchWins} 次`;
+  el.todayFlashCount.textContent = `${appState.today.flashPlays} 次`;
+  el.quizRewardRow.textContent = '🥩'.repeat(Math.min(appState.today.quizWins, 20));
+  el.matchRewardRow.textContent = '🍖'.repeat(Math.min(appState.today.matchWins, 20));
+  el.flashRewardRow.textContent = '🥓'.repeat(Math.min(appState.today.flashPlays, 20));
+  el.achievementBoar.src = mins >= 15 ? 'assets/boar_proud.png' : (appState.today.quizWins + appState.today.matchWins >= 4 ? 'assets/boar_happy.png' : 'assets/boar_sad.png');
+}
+function openBoarModal(img,title,text){
+  el.boarModalImg.src = img;
+  el.boarModalTitle.textContent = title;
+  el.boarModalText.textContent = text;
+  el.boarModal.classList.remove('hidden');
+}
+function closeBoarModal(){ el.boarModal.classList.add('hidden'); }
+
+function bindEvents(){
+  $('#startBtn').onclick = () => {
+    appState.currentUnit = Number(el.unitSelect.value);
+    renderMenu();
+    showScreen('menuScreen');
+  };
+  $('#homeHelpBtn').onclick = $('#menuHelpBtn').onclick = () => { renderHelp(); showScreen('helpScreen'); };
+  $('#homeAchieveBtn').onclick = $('#menuAchieveBtn').onclick = () => showScreen('achievementScreen');
+  $$('[data-action="home"]').forEach(b => b.onclick = () => showScreen('homeScreen'));
+  $$('[data-action="back"]').forEach(b => b.onclick = goBack);
+  $$('[data-action="menu"]').forEach(b => b.onclick = () => { stopQuiz(); stopMatch(); showScreen('menuScreen'); });
+  $$('[data-action="settings"]').forEach(b => b.onclick = openSettings);
+  $('#closeSettingsBtn').onclick = $('#settingsBackdrop').onclick = closeSettings;
+  $('#goHomeBtn').onclick = () => { closeSettings(); showScreen('homeScreen'); };
+  $('#goBackBtn').onclick = goBack;
+  $('#resetHeartsBtn').onclick = () => { appState.hearts = {}; saveState(); renderWordlist(); closeSettings(); };
+
+  el.pinyinToggle.onchange = (e) => { appState.settings.showPinyinFront = e.target.checked; saveState(); renderFlash(); };
+  el.directionToggle.onchange = (e) => { appState.settings.reverseDirection = e.target.checked; saveState(); renderFlash(); renderWordlist(); };
+  el.zhAudioToggle.onchange = (e) => { appState.settings.zhAudio = e.target.checked; saveState(); };
+  el.viAudioToggle.onchange = (e) => { appState.settings.viAudio = e.target.checked; saveState(); };
+  el.hapticToggle.onchange = (e) => { appState.settings.haptic = e.target.checked; saveState(); };
+
+  $$('.menu-btn').forEach(btn => btn.onclick = () => {
+    const mode = btn.dataset.mode;
+    if(mode === 'wordlist'){ renderWordlist(); showScreen('wordlistScreen'); }
+    if(mode === 'flash'){ renderFlash(); showScreen('flashScreen'); }
+    if(mode === 'quiz'){ openQuizDifficulty(); }
+    if(mode === 'match'){ startMatch(); }
+  });
+
+  el.wordlistContainer.addEventListener('click', (e)=>{
+    const btn = e.target.closest('[data-speak-word]');
+    if(!btn) return;
+    const word = currentWords().find(w=>w.id===btn.dataset.speakWord);
+    if(word) speakWordlist(word);
+  });
+
+  $$('.seg-btn').forEach(btn => btn.onclick = () => { appState.flash.view = btn.dataset.flashView; renderFlash(); });
+  $('#shuffleFlashBtn').onclick = () => { buildFlashGrid(); renderFlash(); };
+  el.flashGrid.addEventListener('click', (e)=>{
+    const card = e.target.closest('.flash-card');
+    if(!card) return;
+    card.classList.toggle('flipped');
+    const word = appState.flash.gridWords.find(w=>w.id===card.dataset.flashId);
+    if(card.classList.contains('flipped') && word){
+      if(appState.settings.reverseDirection){
+        if(appState.settings.zhAudio) speakSequence([{text: word.zh, lang:'zh-TW'}]);
+      }else{
+        if(appState.settings.viAudio) speakSequence([{text: word.vi, lang:'vi-VN'}]);
+      }
+      vibrate(12);
+    }
+  });
+
+  el.flashSingleCard.addEventListener('click', toggleSingleFlip);
+  let dragging = false;
+  el.flashSingleCard.addEventListener('pointerdown', (e)=>{ dragging=true; appState.flash.dragStartX = e.clientX; appState.flash.currentTranslate = 0; el.flashSingleCard.setPointerCapture(e.pointerId); });
+  el.flashSingleCard.addEventListener('pointermove', (e)=>{
+    if(!dragging || appState.flash.singleFlipped || appState.flash.singleDone) return;
+    appState.flash.currentTranslate = e.clientX - appState.flash.dragStartX;
+    renderFlashSingle();
+  });
+  el.flashSingleCard.addEventListener('pointerup', ()=> {
+    if(!dragging) return; dragging=false;
+    const dx = appState.flash.currentTranslate;
+    if(Math.abs(dx) > 90){
+      vibrate(20);
+      stepFlash(dx > 0);
+    }else{
+      appState.flash.currentTranslate = 0; renderFlashSingle();
+    }
+  });
+  $('#swipeLeftBtn').onclick = () => { vibrate(20); stepFlash(false); };
+  $('#swipeRightBtn').onclick = () => { vibrate(20); stepFlash(true); };
+  $('#flashReplayBtn').onclick = resetFlashSingle;
+
+  el.quizOptions.addEventListener('click', (e)=>{
+    const btn = e.target.closest('[data-quiz]');
+    if(btn){
+      const chosen = currentWords().find(w=>w.id===btn.dataset.quiz);
+      handleQuizAnswer(chosen.id);
+    }
+  });
+  $('#quizRestartBtn').onclick = () => startQuiz(false, appState.quiz.difficulty);
+  $('#quizWrongBtn').onclick = openWrongModal;
+  $('#quizMenuBtn').onclick = () => showScreen('menuScreen');
+  $('#closeWrongBtn').onclick = $('#wrongBackdrop').onclick = closeWrongModal;
+  $('#retryWrongBtn').onclick = () => { closeWrongModal(); startQuiz(true, appState.quiz.difficulty); };
+
+  el.matchBoard.addEventListener('click', (e)=>{
+    const btn = e.target.closest('[data-match]');
+    if(btn) handleMatch(btn.dataset.match);
+  });
+  $('#matchRestartBtn').onclick = () => startMatch();
+  $('#matchMenuBtn').onclick = () => showScreen('menuScreen');
+
+
+  $('#closeQuizDifficultyBtn').onclick = $('#quizDifficultyBackdrop').onclick = closeQuizDifficulty;
+  $$("[data-quiz-difficulty]").forEach(btn => btn.onclick = () => {
+    closeQuizDifficulty();
+    startQuiz(false, btn.dataset.quizDifficulty);
+  });
+
+  $('#closeBoarBtn').onclick = $('#boarBackdrop').onclick = closeBoarModal;
+
+  document.addEventListener('visibilitychange', ()=>{ appState.study.lastTick = Date.now(); });
+}
+
+loadState();
+renderHome();
+renderMenu();
+renderHelp();
+bindEvents();
+setInterval(updateStudyTime, 1000);
