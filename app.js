@@ -75,14 +75,13 @@ appState.units.forEach(u=>{u.words.forEach(w=>{w.zh=normalizeZh(w.zh); w.pinyin=
 const el = {
   quoteZh: $('#quoteZh'),
   quoteVi: $('#quoteVi'),
-  menuMiniQuote: $('#menuMiniQuote'),
-  unitStatus: $('#unitStatus'),
   menuUnitSelect: $('#menuUnitSelect'),
   unitSelect: $('#unitSelect'),
   startBtn: $('#startBtn'),
   helpArticle: $('#helpArticle'),
   wordlistContainer: $('#wordlistContainer'),
-    flashGrid: $('#flashGrid'),
+  menuTitle: $('#menuTitle'),
+  flashGrid: $('#flashGrid'),
   flashProgress: $('#flashProgress'),
   flashSingleCard: $('#flashSingleCard'),
   flashReplayBtn: $('#flashReplayBtn'),
@@ -192,6 +191,7 @@ function updateDock(id){
 
 function goBack(){
   closeSettings();
+  if(appState.currentScreen === 'homeScreen') return;
   if(appState.currentScreen === 'menuScreen') return showScreen('menuScreen', false);
   if(appState.currentScreen === 'quizScreen') stopQuiz();
   if(appState.currentScreen === 'matchScreen') stopMatch();
@@ -226,28 +226,19 @@ function renderFamiliarityChart(){
   `;
 }
 function renderHome(){
-  if(el.unitSelect){
-    el.unitSelect.innerHTML = appState.units.map(u => `<option value="${u.unit}">${u.labelZh} · ${u.labelVi}</option>`).join('');
-    el.unitSelect.value = appState.currentUnit;
-  }
-  if(el.menuUnitSelect){
-    el.menuUnitSelect.innerHTML = appState.units.map(u => `<option value="${u.unit}">${u.labelZh} · ${u.labelVi}</option>`).join('');
-    el.menuUnitSelect.value = appState.currentUnit;
-  }
+  const q = appState.quotes[Math.floor(Math.random()*appState.quotes.length)];
+  el.quoteZh.textContent = q.zh;
+  el.quoteVi.textContent = q.vi;
+  el.unitSelect.innerHTML = appState.units.map(u => `<option value="${u.unit}">${u.labelZh}<br>${u.labelVi}</option>`).join('');
+  if(el.menuUnitSelect) el.menuUnitSelect.innerHTML = appState.units.map(u => `<option value="${u.unit}">${u.labelZh} · ${u.labelVi}</option>`).join('');
+  el.unitSelect.value = appState.currentUnit;
+  if(el.menuUnitSelect) el.menuUnitSelect.value = appState.currentUnit;
+  renderFamiliarityChart();
 }
 
 function renderMenu(){
-  const q = appState.quotes[Math.floor(Math.random()*appState.quotes.length)];
-  const shortZh = String(q.zh || '').trim();
-  const shortVi = String(q.vi || '').trim();
-  if(el.menuMiniQuote) el.menuMiniQuote.innerHTML = `${shortZh}<br><small>${shortVi}</small>`;
-  if(el.menuUnitSelect){
-    el.menuUnitSelect.innerHTML = appState.units.map(u => `<option value="${u.unit}">${u.labelZh} · ${u.labelVi}</option>`).join('');
-    el.menuUnitSelect.value = appState.currentUnit;
-  }
-  if(el.unitStatus){
-    el.unitStatus.innerHTML = `已選擇 第 ${appState.currentUnit} 單元<br><small>Đã chọn Bài ${appState.currentUnit}</small>`;
-  }
+  el.menuTitle.innerHTML = `單元 ${appState.currentUnit}<br>Bài ${appState.currentUnit}`;
+  if(el.menuUnitSelect) el.menuUnitSelect.value = appState.currentUnit;
 }
 
 function heartCount(id){ return appState.hearts[id] || 0; }
@@ -735,9 +726,7 @@ function bindEvents(){
     renderMenu();
     showScreen('menuScreen');
   }; }
-  if(el.menuUnitSelect){ el.menuUnitSelect.onchange = () => { appState.currentUnit = Number(el.menuUnitSelect.value || 1); renderMenu(); saveState(); }; }
-  const menuStartBtn = $('#menuStartBtn');
-  if(menuStartBtn){ menuStartBtn.onclick = () => { appState.currentUnit = Number(el.menuUnitSelect.value || appState.currentUnit || 1); saveState(); renderMenu(); vibrate(18); if(el.unitStatus){ el.unitStatus.classList.add('menu-mini-success'); el.unitStatus.innerHTML = `今天是第 ${appState.currentUnit} 單元<br><small>Hôm nay là Bài ${appState.currentUnit}</small>`; setTimeout(()=>{ el.unitStatus.classList.remove('menu-mini-success'); el.unitStatus.innerHTML = `已選擇 第 ${appState.currentUnit} 單元<br><small>Đã chọn Bài ${appState.currentUnit}</small>`; }, 1500); } }; }
+  if(el.menuUnitSelect){ el.menuUnitSelect.onchange = () => { appState.currentUnit = Number(el.menuUnitSelect.value); renderMenu(); }; }
   $$('.dock-btn').forEach(btn => btn.onclick = () => {
     const map = {menu:'menuScreen', achievement:'achievementScreen', help:'helpScreen'};
     if(btn.dataset.dock === 'help') renderHelp();
@@ -758,16 +747,12 @@ function bindEvents(){
   el.viAudioToggle.onchange = (e) => { appState.settings.viAudio = e.target.checked; saveState(); };
   el.hapticToggle.onchange = (e) => { appState.settings.haptic = e.target.checked; saveState(); };
 
-  document.querySelector('.menu-grid').addEventListener('click', (e) => {
-    const btn = e.target.closest('.menu-btn');
-    if(!btn) return;
-    appState.currentUnit = Number(el.menuUnitSelect?.value || appState.currentUnit || 1);
-    saveState();
+  $$('.menu-btn').forEach(btn => btn.onclick = () => {
     const mode = btn.dataset.mode;
-    if(mode === 'wordlist'){ renderWordlist(); showScreen('wordlistScreen'); return; }
-    if(mode === 'flash'){ renderFlash(); showScreen('flashScreen'); return; }
-    if(mode === 'quiz'){ openQuizDifficulty(); return; }
-    if(mode === 'match'){ startMatch(); return; }
+    if(mode === 'wordlist'){ renderWordlist(); showScreen('wordlistScreen'); }
+    if(mode === 'flash'){ renderFlash(); showScreen('flashScreen'); }
+    if(mode === 'quiz'){ openQuizDifficulty(); }
+    if(mode === 'match'){ startMatch(); }
   });
 
   el.wordlistContainer.addEventListener('click', (e)=>{

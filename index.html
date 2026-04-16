@@ -8,7 +8,7 @@
 </head>
 <body>
 <div id="app">
-  <section class="screen hidden-home" id="homeScreen" aria-hidden="true">
+  <section class="screen hidden-home" id="homeScreen">
     <div class="safe">
       <div class="card quote-box">
         <p class="quote-zh" id="quoteZh"></p>
@@ -41,20 +41,22 @@
     </div>
   </section>
 
-  <section class="screen active" id="menuScreen">
+  <section class="screen" id="menuScreen">
     <div class="safe">
       <div class="menu-top card menu-only-card compact-main-card">
-        <div class="mini-quote bilingual-quote" id="menuMiniQuote">今天多看一眼<br><small>Hôm nay nhìn thêm một chút</small></div>
-        <div class="menu-top-row menu-top-row-simple menu-top-row-compact">
+        <div class="mini-quote" id="menuMiniQuote">今天多看一眼，明天就更熟一點</div>
+        <div class="menu-top-row menu-top-row-simple">
           <div class="menu-unit-wrap grow">
+            <label class="label slim" for="menuUnitSelect">單元
+Bài</label>
             <div class="select-wrap compact">
               <select id="menuUnitSelect"></select>
             </div>
           </div>
-          <button class="primary-btn menu-start-btn" id="menuStartBtn" type="button">開始<br>Bắt đầu</button>
-          <button class="icon-btn" data-action="settings" type="button">⚙</button>
+          <div class="menu-unit-title" id="menuTitle">單元 1
+Bài 1</div>
+          <button class="icon-btn" data-action="settings">⚙</button>
         </div>
-        <div class="unit-status" id="unitStatus">已選擇 第 1 單元<br><small>Đã chọn Bài 1</small></div>
       </div>
       <div class="menu-grid">
         <button class="menu-btn" data-mode="wordlist"><span>🔊</span><b>單字表</b><small>Danh sách từ vựng</small></button>
