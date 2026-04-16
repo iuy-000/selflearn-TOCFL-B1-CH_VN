@@ -255,6 +255,14 @@ function renderHelp(){
     <h3>🌱 Cuối cùng / 最後</h3>
     <p>Thành công không đến ngay, nhưng ngày càng gần hơn 😊<br/>
     成功不會馬上到來，但是會越來越靠近 😊</p>
+
+    <hr style="border:none;border-top:1px solid var(--line);margin:16px 0"/>
+    <p style="font-size:12px;color:var(--sub);line-height:1.8">
+      🐗 Được tạo ra bởi <a href="https://www.instagram.com/dajiangshan999" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700">@dajiangshan999</a><br/>
+      本應用程式由 <b>大江山</b> 製作，所有設計、介面與圖片著作權均歸作者所有。<br/>
+      單字內容來源：TOCFL B1 公開詞彙表。<br/>
+      © 2026 dajiangshan999 · <a href="mailto:jiang.universe999@gmail.com" style="color:var(--accent)">jiang.universe999@gmail.com</a>
+    </p>
   `;
 }
 
