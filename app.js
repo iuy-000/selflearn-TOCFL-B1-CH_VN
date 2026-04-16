@@ -191,7 +191,6 @@ function updateDock(id){
 
 function goBack(){
   closeSettings();
-  if(appState.currentScreen === 'homeScreen') return;
   if(appState.currentScreen === 'menuScreen') return showScreen('menuScreen', false);
   if(appState.currentScreen === 'quizScreen') stopQuiz();
   if(appState.currentScreen === 'matchScreen') stopMatch();
@@ -226,19 +225,29 @@ function renderFamiliarityChart(){
   `;
 }
 function renderHome(){
-  const q = appState.quotes[Math.floor(Math.random()*appState.quotes.length)];
-  el.quoteZh.textContent = q.zh;
-  el.quoteVi.textContent = q.vi;
-  el.unitSelect.innerHTML = appState.units.map(u => `<option value="${u.unit}">${u.labelZh}<br>${u.labelVi}</option>`).join('');
-  if(el.menuUnitSelect) el.menuUnitSelect.innerHTML = appState.units.map(u => `<option value="${u.unit}">${u.labelZh} · ${u.labelVi}</option>`).join('');
-  el.unitSelect.value = appState.currentUnit;
-  if(el.menuUnitSelect) el.menuUnitSelect.value = appState.currentUnit;
-  renderFamiliarityChart();
+  if(el.unitSelect){
+    el.unitSelect.innerHTML = appState.units.map(u => `<option value="${u.unit}">${u.labelZh} · ${u.labelVi}</option>`).join('');
+    el.unitSelect.value = appState.currentUnit;
+  }
+  if(el.menuUnitSelect){
+    el.menuUnitSelect.innerHTML = appState.units.map(u => `<option value="${u.unit}">${u.labelZh} · ${u.labelVi}</option>`).join('');
+    el.menuUnitSelect.value = appState.currentUnit;
+  }
 }
 
 function renderMenu(){
-  el.menuTitle.innerHTML = `單元 ${appState.currentUnit}<br>Bài ${appState.currentUnit}`;
-  if(el.menuUnitSelect) el.menuUnitSelect.value = appState.currentUnit;
+  const q = appState.quotes[Math.floor(Math.random()*appState.quotes.length)];
+  const shortZh = (q.zh || '').split(/[，,。]/)[0].trim();
+  const shortVi = (q.vi || '').split(/[,.]/)[0].trim();
+  const mini = [shortZh, shortVi].filter(Boolean).join('<br>');
+  const titleZh = currentUnitObj()?.labelZh || `單元 ${appState.currentUnit}`;
+  const titleVi = currentUnitObj()?.labelVi || `Bài ${appState.currentUnit}`;
+  if(el.menuMiniQuote) el.menuMiniQuote.innerHTML = mini || '今天多看一眼';
+  if(el.menuTitle) el.menuTitle.innerHTML = `${titleZh}<br>${titleVi}`;
+  if(el.menuUnitSelect){
+    el.menuUnitSelect.innerHTML = appState.units.map(u => `<option value="${u.unit}">${u.labelZh} · ${u.labelVi}</option>`).join('');
+    el.menuUnitSelect.value = appState.currentUnit;
+  }
 }
 
 function heartCount(id){ return appState.hearts[id] || 0; }
