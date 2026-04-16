@@ -28,7 +28,8 @@ const appState = {
   },
   quiz: {
     duration: 120, remaining: 120, timer: null, queue: [], current: null, asked: 0, score: 0,
-    wrongItems: [], onlyWrong:false, active:false, difficulty:'normal'
+    wrongItems: [], onlyWrong:false, active:false, difficulty:'normal',
+    isReview: false, reviewWordCount: 0
   },
   match: {
     duration: 40, remaining: 40, timer: null, board: [], selected: null, matched: 0,
@@ -121,9 +122,6 @@ const el = {
   todayStudyText: $('#todayStudyText'),
   quizDifficultySheet: $('#quizDifficultySheet'),
   diamondRow: $('#diamondRow'),
-  missionTask1State: $('#missionTask1State'),
-  missionTask2State: $('#missionTask2State'),
-  missionTask3State: $('#missionTask3State'),
 };
 
 function initToday(){
@@ -137,6 +135,9 @@ function initToday(){
     perfectQuizDone: 0,
     goodQuizCount: 0,
     matchSuccesses: 0,
+    sessionTitle: '',
+    studiedUnits: [],
+    wrongWordIds: [],
   };
 }
 function loadState(){
@@ -202,41 +203,52 @@ function renderHome(){
 function renderMenu(){ el.menuTitle.innerHTML = `Bài ${appState.currentUnit}`; }
 
 function renderHelp(){
-  const total = appState.units.reduce((sum, u) => sum + u.words.length, 0);
+  const total = appState.units.reduce((sum,u)=>sum+u.words.length,0);
   el.helpArticle.innerHTML = `
-    <h2>📘 Hướng dẫn</h2>
-    <h3>📚 Về bài học</h3>
-    <p>Hệ thống này gồm tổng cộng <b>${total}</b> từ vựng TOCFL B1, được chia thành <b>35 bài</b> để bạn có thể luyện tập từng phần.</p>
-    <p>💡 Gợi ý: Mỗi ngày chỉ cần học khoảng <b>15 phút</b>, luyện tập thường xuyên sẽ hiệu quả hơn học trong thời gian dài.</p>
-    <h3>🔁 Cách luyện tập</h3>
-    <p><b>🔊 Danh sách từ vựng</b><br/>Kết nối âm thanh và chữ viết. Nhấn vào từ để nghe phát âm và có thể đọc theo.</p>
-    <p><b>🃏 Lật thẻ</b><br/>Lặp lại để ghi nhớ. Phiên bản từng thẻ: luyện nhận diện chữ. Phiên bản nhiều thẻ: luyện khả năng nhìn nhanh.</p>
-    <p><b>🧠 Trò chơi 4 lựa chọn</b><br/>Kiểm tra xem bạn đã nhớ chưa.</p>
-    <p><b>🧩 Ghép cặp</b><br/>Luyện phản xạ khi nhận diện từ trong bảng, hoàn thành trong thời gian giới hạn.</p>
-    <p><b>💔 Lỗi sai</b><br/>Khi bạn làm sai trong trò chơi, từ đó sẽ xuất hiện 💔. Càng nhiều 💔 nghĩa là bạn càng chưa quen. Làm đúng một lần sẽ giảm một 💔. Bạn cũng có thể vào “Cài đặt” để đặt lại 💔.</p>
-    <h3>🧠 Vì sao học theo cách này?</h3>
-    <p>Trước tiên: tiếp nhận kiến thức (kết nối thị giác + thính giác + ý nghĩa). Sau đó: lặp lại và sử dụng (luyện tập, kiểm tra, phản xạ). Khi hai bước này lặp lại nhiều lần, sẽ hình thành trí nhớ tự nhiên.</p>
-    <h3>🚀 Mục tiêu</h3>
-    <p>Nhận chữ nhanh hơn, hiểu nhanh hơn, sử dụng tiếng Trung tự nhiên hơn và vượt qua kỳ thi TOCFL dễ dàng hơn.</p>
-    <h3>🌱 Cuối cùng</h3>
-    <p>Thành công sẽ không đến ngay lập tức, nhưng sẽ ngày càng đến gần hơn 😊</p>
-    <div class="sep"></div>
-    <h2>📘 使用說明</h2>
-    <h3>📚 關於單元</h3>
-    <p>這個系統整理了 TOCFL B1 的單字，總共 <b>${total}</b> 個，並分成 <b>35 個單元</b>，讓學生可以分批練習。</p>
-    <p>💡 建議：每天花約 <b>15 分鐘</b> 練習，高頻率的練習會比長時間練習更有效。</p>
-    <h3>🔁 練習方式</h3>
-    <p><b>🔊 單字表</b><br/>連結聲音與文字。按單字會有發音，可以跟讀。</p>
-    <p><b>🃏 翻卡</b><br/>反覆練習，建立記憶。單張版本：練習認字；多張版本：練習瀏覽。</p>
-    <p><b>🧠 四選一</b><br/>檢查自己是否記得。</p>
-    <p><b>🧩 配對</b><br/>訓練在表格中出現單字時的反應速度。</p>
-    <p><b>💔 心碎（錯題）</b><br/>在遊戲中答錯會在單字表中出現 💔。越多代表越不熟；在遊戲中答對一次，就會減少一顆 💔；也可以在「設定」重新歸零 💔。</p>
-    <h3>🧠 為什麼這樣學？</h3>
-    <p>先輸入知識（連結視覺、聽覺與理解），再反覆使用（練習、測驗、反應）。當這兩件事情不斷重複，就會慢慢形成肌肉記憶。</p>
-    <h3>🚀 最終目標</h3>
-    <p>更快認字、更快理解，更自然地使用中文，順利通過 TOCFL。</p>
-    <h3>🌱 最後</h3>
-    <p>成功不會馬上到來，但是會越來越靠近 😊</p>
+    <h2>📘 Hướng dẫn / 使用說明</h2>
+
+    <h3>📚 Về bài học / 關於課程</h3>
+    <p>Gồm <b>${total}</b> từ vựng TOCFL B1, chia thành <b>35 bài</b>.<br/>
+    整理了 TOCFL B1 的單字，共 <b>${total}</b> 個，分成 <b>35 個單元</b>。</p>
+    <p>💡 Mỗi ngày <b>15 phút</b>, luyện thường xuyên hiệu quả hơn học dồn.<br/>
+    每天花 <b>15 分鐘</b> 練習，比一次學很久更有效。</p>
+
+    <h3>⚙ Cài đặt / 設定</h3>
+    <p>Nhấn <b>⚙</b> ở góc phải trên để mở cài đặt.<br/>
+    按右上角 <b>⚙</b> 可以打開設定。</p>
+    <p><b>Pinyin ở mặt trước</b> — Hiển thị phiên âm khi luyện thẻ.<br/>
+    在翻卡正面顯示拼音。</p>
+    <p><b>Việt ↔ Trung</b> — Đổi chiều học: nhìn tiếng Việt đoán tiếng Trung.<br/>
+    切換學習方向：看越南文猜中文。</p>
+    <p><b>Âm thanh tiếng Trung / Việt</b> — Bật phát âm tự động.<br/>
+    打開後遊戲和翻卡會自動播放發音，可以跟著練習。</p>
+    <p><b>Rung phản hồi</b> — Rung khi trả lời đúng/sai.<br/>
+    答題時震動回饋。</p>
+
+    <h3>🔁 Cách luyện tập / 練習方式</h3>
+    <p><b>🔊 Danh sách từ / 單字表</b><br/>
+    Nhấn vào từ để nghe. Luyện phát âm theo.<br/>
+    按單字播放發音，可以跟著朗讀。</p>
+    <p><b>🃏 Lật thẻ / 翻卡</b><br/>
+    Nhiều thẻ: luyện nhìn nhanh. Từng thẻ: luyện nhận diện, vuốt sang trái/phải.<br/>
+    多張練習瀏覽；單張模式可左右滑動（或鍵盤 ←→）。</p>
+    <p><b>🧠 4 lựa chọn / 四選一</b><br/>
+    Kiểm tra trí nhớ trong thời gian giới hạn với 3 mức độ khó.<br/>
+    有3種難度，在限時內測驗記憶。</p>
+    <p><b>🧩 Ghép cặp / 配對</b><br/>
+    Nối từ Trung–Việt trong 40 giây. Hoàn thành đúng giờ mới tính nhiệm vụ.<br/>
+    40秒內配對中文和越南文，時間內完成才算任務成功。</p>
+    <p><b>💔 Luyện từ sai / 錯題加強</b><br/>
+    Bài luyện không tính giờ với các từ sai hôm nay. Nhấn 💔 ở thanh điều hướng.<br/>
+    用今天答錯的單字進行不計時練習，按下方 💔 按鈕進入。</p>
+
+    <h3>💔 Lỗi sai / 心碎記錄</h3>
+    <p>Sai → xuất hiện 💔. Đúng → giảm 💔. Vào Cài đặt để đặt lại.<br/>
+    答錯出現 💔，答對一次減少一顆。可在「設定」重新歸零。</p>
+
+    <h3>🌱 Cuối cùng / 最後</h3>
+    <p>Thành công không đến ngay, nhưng ngày càng gần hơn 😊<br/>
+    成功不會馬上到來，但是會越來越靠近 😊</p>
   `;
 }
 
@@ -258,6 +270,22 @@ function renderWordlist(){
   `).join('');
 }
 
+function trackStudiedUnit(){
+  if(!appState.today.studiedUnits) appState.today.studiedUnits = [];
+  if(!appState.today.studiedUnits.includes(appState.currentUnit)){
+    appState.today.studiedUnits.push(appState.currentUnit);
+    saveState();
+  }
+}
+
+function unitFamiliarity(unitId){
+  const unit = appState.units.find(u=>u.unit===unitId);
+  if(!unit) return 0;
+  const words = unit.words;
+  const known = words.filter(w=>(appState.hearts[w.id]||0)===0).length;
+  return Math.round((known/words.length)*100);
+}
+
 function buildFlashGrid(){
   appState.flash.gridWords = sample(currentWords(), 16);
 }
@@ -265,7 +293,9 @@ function renderFlash(){
   $$('.seg-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.flashView === appState.flash.view));
   $('#flashGridWrap').classList.toggle('active', appState.flash.view === 'grid');
   $('#flashSingleWrap').classList.toggle('active', appState.flash.view === 'single');
+  $('#shuffleFlashBtn').classList.toggle('hidden', appState.flash.view !== 'grid');
   if(appState.flash.view === 'grid'){
+    trackStudiedUnit();
     if(!appState.flash.gridWords.length) buildFlashGrid();
     el.flashGrid.innerHTML = appState.flash.gridWords.map(w => `
       <button class="flash-card" data-flash-id="${w.id}">
@@ -287,6 +317,7 @@ function renderFlash(){
       </button>
     `).join('');
   }else{
+    trackStudiedUnit();
     if(!appState.flash.singleWords.length || appState.flash.singleDone){
       appState.flash.singleWords = shuffle(currentWords());
       appState.flash.singleIndex = 0;
@@ -390,11 +421,7 @@ function toggleSingleFlip(){
 
 
 function getQuizDuration(level){ return ({easy:180, normal:120, hard:90})[level] || 120; }
-function getQuizDifficultyLabel(level){ return ({easy:`簡單
-Dễ · 3:00`, normal:`普通
-Vừa · 2:00`, hard:`困難
-Khó · 1:30`})[level] || `普通
-Vừa · 2:00`; }
+function getQuizDifficultyLabel(level){ return ({easy:`簡單\nDễ · 3:00`, normal:`普通\nVừa · 2:00`, hard:`困難\nKhó · 1:30`})[level] || `普通\nVừa · 2:00`; }
 function getQuizFeedbackDelay(level){ return ({easy:1200, normal:900, hard:600})[level] || 900; }
 function openQuizDifficulty(){
   el.quizDifficultySheet.classList.remove('hidden');
@@ -412,13 +439,17 @@ function buildQuizQueue(onlyWrong=false){
 function startQuiz(onlyWrong=false, difficulty=appState.quiz.difficulty || 'normal'){
   stopMatch();
   stopSpeech();
+  trackStudiedUnit();
   appState.quiz.difficulty = difficulty;
   appState.quiz.duration = getQuizDuration(difficulty);
+  appState.quiz.isReview = false;
   buildQuizQueue(onlyWrong);
   appState.quiz.remaining = appState.quiz.duration;
   appState.quiz.active = false;
   el.quizResultSheet.classList.add('hidden');
   el.quizCountdown.classList.remove('hidden');
+  document.getElementById('quizTimerBox').classList.remove('hidden');
+  document.getElementById('quizTitle').textContent = '🧠 四選一';
   showScreen('quizScreen');
   countdown(el.quizCountdown, () => {
     appState.quiz.active = true;
@@ -428,25 +459,29 @@ function startQuiz(onlyWrong=false, difficulty=appState.quiz.difficulty || 'norm
   });
 }
 function tickQuiz(){
+  if(appState.quiz.isReview) return; // no timer for review
   const pct = Math.max(0, appState.quiz.remaining / appState.quiz.duration);
   el.quizTimerText.textContent = `${Math.floor(appState.quiz.remaining/60)}:${String(appState.quiz.remaining%60).padStart(2,'0')}`;
   el.quizTimerFill.style.width = `${pct*100}%`;
   el.quizTimerFill.classList.toggle('warn', appState.quiz.remaining <= 15);
   el.quizTimerFill.classList.toggle('danger', appState.quiz.remaining <= 5);
   el.quizTimerFill.classList.toggle('blink', appState.quiz.remaining <= 5);
-  if(appState.quiz.remaining <= 0) return finishQuiz();
+  if(appState.quiz.remaining <= 0) return finishQuiz(true);
   appState.quiz.remaining -= 1;
 }
 function nextQuizQuestion(){
-  if(!appState.quiz.queue.length) return finishQuiz();
+  if(!appState.quiz.queue.length) return appState.quiz.isReview ? finishReviewQuiz() : finishQuiz();
   appState.quiz.current = appState.quiz.queue.shift();
   appState.quiz.asked += 1;
   const current = appState.quiz.current;
-  el.quizProgressText.textContent = `${appState.quiz.asked} / ${currentWords().length}`;
+  el.quizProgressText.textContent = appState.quiz.isReview
+    ? `${appState.quiz.asked} / ${appState.quiz.reviewWordCount}`
+    : `${appState.quiz.asked} / ${currentWords().length}`;
   el.quizPrompt.textContent = promptText(current);
   el.quizPromptPinyin.textContent = (!appState.settings.reverseDirection && appState.settings.showPinyinFront) ? current.pinyin : '';
   el.quizFeedback.innerHTML = '';
-  const options = shuffle([current, ...sample(currentWords().filter(w => w.id !== current.id), 3)]);
+  const pool = appState.quiz.isReview ? appState.units.flatMap(u=>u.words) : currentWords();
+  const options = shuffle([current, ...sample(pool.filter(w=>w.id!==current.id), 3)]);
   el.quizOptions.innerHTML = options.map(w => `<button class="quiz-option" data-quiz="${w.id}">${answerText(w)}</button>`).join('');
   speakPromptForCurrent(current);
 }
@@ -475,6 +510,9 @@ function handleQuizAnswer(id){
   }else{
     changeHeart(word.id, +1);
     appState.quiz.wrongItems.push(word);
+    // Track wrong word for review quiz
+    if(!appState.today.wrongWordIds) appState.today.wrongWordIds = [];
+    if(!appState.today.wrongWordIds.includes(word.id)) appState.today.wrongWordIds.push(word.id);
     vibrate([30,30,30]);
     el.quizFeedback.innerHTML = `<div>答錯了 / Sai rồi</div><div>${word.zh}｜${word.vi}｜${word.pinyin}</div>`;
   }
@@ -483,26 +521,95 @@ function handleQuizAnswer(id){
   setTimeout(()=>{ appState.quiz.active = true; nextQuizQuestion(); }, delay);
 }
 function stopQuiz(){ if(appState.quiz.timer){ clearInterval(appState.quiz.timer); appState.quiz.timer = null; } appState.quiz.active = false; }
-function finishQuiz(){
+
+function triggerBoarPop(imgEl){
+  imgEl.classList.remove('boar-pop');
+  void imgEl.offsetWidth;
+  imgEl.classList.add('boar-pop');
+}
+
+function finishQuiz(timeUp=false){
+  if(appState.quiz.isReview) return finishReviewQuiz();
   stopQuiz();
   const asked = appState.quiz.asked;
   const score = appState.quiz.score;
-  const pass = score >= Math.ceil(currentWords().length * 0.7);
-  // Task 1: all correct (no wrong answers)
+  const accuracy = asked > 0 ? score/asked : 0;
   if(asked > 0 && appState.quiz.wrongItems.length === 0){
-    appState.today.perfectQuizDone = (appState.today.perfectQuizDone || 0) + 1;
+    appState.today.perfectQuizDone = (appState.today.perfectQuizDone||0)+1;
   }
-  // Task 2: 80%+ accuracy
-  if(asked > 0 && score / asked >= 0.8){
-    appState.today.goodQuizCount = (appState.today.goodQuizCount || 0) + 1;
+  if(asked > 0 && accuracy >= 0.8){
+    appState.today.goodQuizCount = (appState.today.goodQuizCount||0)+1;
   }
-  el.quizBoar.src = pass ? 'assets/boar_happy.png' : 'assets/boar_sad.png';
-  el.quizResultTitle.textContent = pass ? 'Thành công / 成功' : 'Thất bại / 失敗';
-  el.quizResultText.textContent = `答對 ${score} 題，共 ${asked} 題｜${getQuizDifficultyLabel(appState.quiz.difficulty)}`;
+  let title, boarSrc;
+  if(timeUp){
+    title='時間到！還不夠熟悉喔 @@\nHết giờ! Cần luyện thêm nha!';
+    boarSrc='assets/boar_tired.png';
+  } else if(accuracy===1 && asked>0){
+    title='太完美了！🌟\nHoàn hảo tuyệt đối!';
+    boarSrc='assets/boar_proud.png';
+  } else if(accuracy>=0.8){
+    title='很棒喔！🎉\nGiỏi lắm!';
+    boarSrc='assets/boar_happy.png';
+  } else if(accuracy>=0.5){
+    title='哎呀！再一次一定可以的！💪\nCố lên! Lần sau chắc chắn được!';
+    boarSrc='assets/boar_sad.png';
+  } else {
+    title='先回翻卡區練習一下再回來吧，慢慢來 🐗\nHãy luyện lật thẻ rồi thử lại nhé!';
+    boarSrc='assets/boar_sad.png';
+  }
+  el.quizBoar.src = boarSrc;
+  triggerBoarPop(el.quizBoar);
+  el.quizResultTitle.textContent = title;
+  el.quizResultText.textContent = `${score}／${asked} 題 (${Math.round(accuracy*100)}%)｜${getQuizDifficultyLabel(appState.quiz.difficulty)}`;
   el.quizResultSheet.classList.remove('hidden');
   appState.today.quizWins += 1;
   saveState();
   checkTaskRewards('quiz');
+}
+
+function startReviewQuiz(){
+  const wrongIds = new Set(appState.today.wrongWordIds||[]);
+  let wrongWords = [];
+  appState.units.forEach(u=>u.words.forEach(w=>{if(wrongIds.has(w.id)) wrongWords.push(w);}));
+  if(!wrongWords.length){
+    openBoarModal('assets/boar_happy.png','🐗 山豬大王','今天還沒有錯題！\n繼續練習來挑戰看看吧！🎉\n\nHôm nay chưa có từ sai!\nHãy luyện tập và thử thách nhé!');
+    return;
+  }
+  stopMatch(); stopSpeech();
+  appState.quiz.isReview = true;
+  appState.quiz.difficulty = 'review';
+  appState.quiz.duration = 9999;
+  appState.quiz.queue = shuffle(wrongWords);
+  appState.quiz.reviewWordCount = wrongWords.length;
+  appState.quiz.current = null;
+  appState.quiz.asked = 0; appState.quiz.score = 0;
+  appState.quiz.wrongItems = []; appState.quiz.onlyWrong = false;
+  appState.quiz.remaining = 9999;
+  appState.quiz.active = false;
+  el.quizResultSheet.classList.add('hidden');
+  el.quizCountdown.classList.remove('hidden');
+  document.getElementById('quizTimerBox').classList.add('hidden');
+  document.getElementById('quizTitle').textContent = '💔 錯題加強';
+  showScreen('quizScreen');
+  countdown(el.quizCountdown, ()=>{
+    appState.quiz.active = true;
+    nextQuizQuestion();
+    // no timer for review
+  });
+}
+
+function finishReviewQuiz(){
+  stopQuiz();
+  const asked = appState.quiz.asked;
+  const score = appState.quiz.score;
+  el.quizBoar.src = 'assets/boar_happy.png';
+  triggerBoarPop(el.quizBoar);
+  el.quizResultTitle.textContent = '辛苦了！🧋';
+  el.quizResultText.textContent = `今天學會了很多新單字！\nRất cố gắng! Hôm nay bạn đã học được nhiều từ mới!\n✅ ${score}／${asked} 題`;
+  el.quizResultSheet.classList.remove('hidden');
+  document.getElementById('quizTimerBox').classList.remove('hidden');
+  document.getElementById('quizTitle').textContent = '🧠 四選一';
+  appState.quiz.isReview = false;
 }
 
 function selectMatchWords(pairCount=9){
@@ -532,6 +639,7 @@ function renderMatch(){
 }
 function startMatch(){
   stopQuiz();
+  trackStudiedUnit();
   buildMatchBoard();
   renderMatch();
   appState.match.remaining = appState.match.duration;
@@ -577,6 +685,9 @@ function handleMatch(key){
     vibrate(18);
     if(appState.match.matched === 9){ renderMatch(); return finishMatch(true,false); }
   } else {
+    // Track wrong words for review
+    if(!appState.today.wrongWordIds) appState.today.wrongWordIds = [];
+    [first.pair, card.pair].forEach(id=>{if(!appState.today.wrongWordIds.includes(id)) appState.today.wrongWordIds.push(id);});
     changeHeart(first.pair, +1);
     changeHeart(card.pair, +1);
     vibrate([30,30,30]);
@@ -587,6 +698,7 @@ function handleMatch(key){
 }
 function finishMatch(success, timeout){
   stopMatch();
+  triggerBoarPop(el.matchBoar);
   if(success){
     el.matchBoar.src = 'assets/boar_happy.png';
     el.matchResultTitle.textContent = '成功 / Thành công';
@@ -668,24 +780,68 @@ function updateStudyTime(){
   if(appState.currentScreen === 'achievementScreen') renderAchievement();
   if(mins >= 15 && !appState.study.milestoneShown){
     appState.study.milestoneShown = true;
-    openBoarModal('assets/boar_proud.png','Chúa tể heo rừng\n山豬大王','今天學習了15分鐘了！你好棒！\nHôm nay bạn đã học 15 phút rồi!');
+    const encouragements = ['我會繼續加油的！💪\nTôi sẽ cố gắng tiếp!','我是最棒的！🌟\nTôi giỏi nhất!','我愛學中文！❤️\nTôi yêu học tiếng Trung!','繼續衝！🔥\nTiếp tục nào!'];
+    const btnText = encouragements[Math.floor(Math.random()*encouragements.length)];
+    openBoarModal('assets/boar_proud.png','🐗 山豬大王說','今天學習了15分鐘！\n你好棒喔！🌟\n\nHôm nay bạn đã học 15 phút!\nBạn thật giỏi!', btnText);
   }
 }
+
+function formatDate(){
+  const now = new Date();
+  const viDays=['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'];
+  return `${viDays[now.getDay()]}, ${now.getDate()}/${now.getMonth()+1}`;
+}
+
+function renderEmojiProgress(containerId, emoji, done, goal){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  let html = '';
+  for(let i=0; i<goal; i++){
+    html += `<span class="emoji-prog${i < done ? ' earned' : ''}">${emoji}</span>`;
+  }
+  el.innerHTML = html;
+}
+
+function renderUnitProgress(){
+  const studied = (appState.today.studiedUnits||[]).slice(-2);
+  const section = document.getElementById('unitProgressSection');
+  if(!section) return;
+  if(!studied.length){section.innerHTML='';return;}
+  section.innerHTML = `<div class="unit-prog-title">📚 Bài đã học hôm nay</div>`+studied.map(uid=>{
+    const unit=appState.units.find(u=>u.unit===uid);
+    const fam=unitFamiliarity(uid);
+    return `<div class="unit-prog-item"><div class="unit-prog-label"><span>${unit?unit.labelVi:'Bài '+uid}</span><span>${fam}%</span></div><div class="unit-prog-track"><div class="unit-prog-fill" style="width:${fam}%"></div></div></div>`;
+  }).join('');
+}
+
 function renderAchievement(){
   const mins = Math.floor(appState.today.seconds / 60);
   const task1Done = Math.min(appState.today.perfectQuizDone || 0, 1);
   const task2Done = Math.min(appState.today.goodQuizCount || 0, 3);
   const task3Done = Math.min(appState.today.matchSuccesses || 0, 3);
   const diamonds = (task1Done >= 1 ? 1 : 0) + (task2Done >= 3 ? 1 : 0) + (task3Done >= 3 ? 1 : 0);
-  el.todayStudyText.innerHTML = `Hôm nay đã học <b>${mins}</b> phút`;
+  el.todayStudyText.innerHTML = `⏱ <b>${mins}</b> phút`;
   if(el.diamondRow) el.diamondRow.textContent = '💎'.repeat(diamonds) + '◇'.repeat(3 - diamonds);
-  el.missionTask1State.textContent = `${task1Done} / 1`;
-  el.missionTask2State.textContent = `${task2Done} / 3`;
-  el.missionTask3State.textContent = `${task3Done} / 3`;
+
+  // Emoji progress for missions
+  renderEmojiProgress('missionTask1Emojis', '💎', task1Done, 1);
+  renderEmojiProgress('missionTask2Emojis', '🥩', task2Done, 3);
+  renderEmojiProgress('missionTask3Emojis', '🍖', task3Done, 3);
+
   document.getElementById('missionTask1').classList.toggle('done', task1Done >= 1);
   document.getElementById('missionTask2').classList.toggle('done', task2Done >= 3);
   document.getElementById('missionTask3').classList.toggle('done', task3Done >= 3);
-  el.achievementBoar.src = diamonds > 0 ? 'assets/boar_proud.png' : 'assets/boar_study.png';
+
+  // Boar state based on diamonds
+  el.achievementBoar.src = diamonds >= 3 ? 'assets/boar_proud.png' : diamonds >= 1 ? 'assets/boar_happy.png' : 'assets/boar_study.png';
+
+  // Date and editable title
+  document.getElementById('achieveDate').textContent = formatDate();
+  const titleEl = document.getElementById('achieveTitle');
+  if(titleEl && document.activeElement !== titleEl) titleEl.value = appState.today.sessionTitle || '';
+
+  // Unit progress
+  renderUnitProgress();
 }
 
 
@@ -701,21 +857,29 @@ function checkTaskRewards(source){
   }
 }
 
-function openBoarModal(img,title,text){
+function openBoarModal(img, title, text, btnText='好 / OK'){
   el.boarModalImg.src = img;
   el.boarModalTitle.textContent = title || 'Chúa tể heo rừng\n山豬大王';
   el.boarModalText.textContent = text;
+  document.getElementById('closeBoarBtn').textContent = btnText;
   el.boarModal.classList.remove('hidden');
 }
 function closeBoarModal(){ el.boarModal.classList.add('hidden'); }
 
 function bindEvents(){
   el.unitSelect.onchange = () => { appState.currentUnit = Number(el.unitSelect.value); renderMenu(); };
+
   $$('.dock-btn').forEach(btn => btn.onclick = () => {
+    const dock = btn.dataset.dock;
+    if(dock === 'review'){
+      startReviewQuiz();
+      return;
+    }
     const map = {home:'homeScreen', achievement:'achievementScreen', help:'helpScreen'};
-    if(btn.dataset.dock === 'help') renderHelp();
-    showScreen(map[btn.dataset.dock]);
+    if(dock === 'help') renderHelp();
+    showScreen(map[dock]);
   });
+
   $$('[data-action="home"]').forEach(b => b.onclick = () => showScreen('homeScreen'));
   $$('[data-action="back"]').forEach(b => b.onclick = goBack);
   $$('[data-action="menu"]').forEach(b => b.onclick = () => { stopQuiz(); stopMatch(); showScreen('homeScreen'); });
@@ -782,16 +946,33 @@ function bindEvents(){
   $('#swipeRightBtn').onclick = () => { vibrate(20); stepFlash(true); };
   $('#flashReplayBtn').onclick = resetFlashSingle;
 
+  // Flash info modal
+  $('#flashInfoBtn').onclick = () => document.getElementById('flashInfoModal').classList.remove('hidden');
+  $('#closeFlashInfoBtn').onclick = $('#flashInfoBackdrop').onclick = () => document.getElementById('flashInfoModal').classList.add('hidden');
+
+  // Flash keyboard navigation
+  document.addEventListener('keydown', (e)=>{
+    if(appState.currentScreen !== 'flashScreen' || appState.flash.view !== 'single') return;
+    if(appState.flash.singleDone) return;
+    if(e.key === 'ArrowLeft'){ e.preventDefault(); vibrate(20); stepFlash(false); }
+    if(e.key === 'ArrowRight'){ e.preventDefault(); vibrate(20); stepFlash(true); }
+    if(e.key === ' ' || e.key === 'Enter'){ e.preventDefault(); toggleSingleFlip(); }
+  });
+
   el.quizOptions.addEventListener('click', (e)=>{
     const btn = e.target.closest('[data-quiz]');
     if(btn){
-      const chosen = currentWords().find(w=>w.id===btn.dataset.quiz);
-      handleQuizAnswer(chosen.id);
+      const allWords = appState.quiz.isReview ? appState.units.flatMap(u=>u.words) : currentWords();
+      const chosen = allWords.find(w=>w.id===btn.dataset.quiz);
+      if(chosen) handleQuizAnswer(chosen.id);
     }
   });
-  $('#quizRestartBtn').onclick = () => startQuiz(false, appState.quiz.difficulty);
+  $('#quizRestartBtn').onclick = () => {
+    if(appState.quiz.isReview) startReviewQuiz();
+    else startQuiz(false, appState.quiz.difficulty);
+  };
   $('#quizWrongBtn').onclick = openWrongModal;
-  $('#quizMenuBtn').onclick = () => showScreen('menuScreen');
+  $('#quizMenuBtn').onclick = () => showScreen('homeScreen');
   $('#closeWrongBtn').onclick = $('#wrongBackdrop').onclick = closeWrongModal;
   $('#retryWrongBtn').onclick = () => { closeWrongModal(); startQuiz(true, appState.quiz.difficulty); };
 
@@ -800,8 +981,7 @@ function bindEvents(){
     if(btn) handleMatch(btn.dataset.match);
   });
   $('#matchRestartBtn').onclick = () => startMatch();
-  $('#matchMenuBtn').onclick = () => showScreen('menuScreen');
-
+  $('#matchMenuBtn').onclick = () => showScreen('homeScreen');
 
   $('#closeQuizDifficultyBtn').onclick = $('#quizDifficultyBackdrop').onclick = closeQuizDifficulty;
   $$("[data-quiz-difficulty]").forEach(btn => btn.onclick = () => {
@@ -810,6 +990,12 @@ function bindEvents(){
   });
 
   $('#closeBoarBtn').onclick = $('#boarBackdrop').onclick = closeBoarModal;
+
+  // Achievement editable title
+  const achieveTitleEl = document.getElementById('achieveTitle');
+  if(achieveTitleEl){
+    achieveTitleEl.oninput = (e) => { appState.today.sessionTitle = e.target.value; saveState(); };
+  }
 
   document.addEventListener('visibilitychange', ()=>{ appState.study.lastTick = Date.now(); });
 }

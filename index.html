@@ -12,8 +12,13 @@
   <section class="screen" id="homeScreen">
     <div class="safe">
       <div class="card quote-box">
-        <p class="quote-zh" id="quoteZh"></p>
-        <p class="quote-vi" id="quoteVi"></p>
+        <div class="quote-inner">
+          <img class="quote-boar-avatar" src="assets/boar_study.png" alt="">
+          <div class="quote-texts">
+            <p class="quote-zh" id="quoteZh"></p>
+            <p class="quote-vi" id="quoteVi"></p>
+          </div>
+        </div>
       </div>
       <div class="card menu-top">
         <div class="menu-top-row">
@@ -35,6 +40,7 @@
       </div>
       <nav class="bottom-dock">
         <button class="dock-btn active" data-dock="home">🏠<span>首頁</span></button>
+        <button class="dock-btn" data-dock="review">💔<span>錯題</span></button>
         <button class="dock-btn" data-dock="achievement">🏆<span>成就</span></button>
         <button class="dock-btn" data-dock="help">📘<span>說明</span></button>
       </nav>
@@ -51,6 +57,7 @@
       <article class="article card" id="helpArticle"></article>
       <nav class="bottom-dock">
         <button class="dock-btn" data-dock="home">🏠<span>首頁</span></button>
+        <button class="dock-btn" data-dock="review">💔<span>錯題</span></button>
         <button class="dock-btn" data-dock="achievement">🏆<span>成就</span></button>
         <button class="dock-btn active" data-dock="help">📘<span>說明</span></button>
       </nav>
@@ -65,27 +72,37 @@
         <div class="icon-spacer"></div>
       </header>
       <div class="card achievement-card share-card">
-        <img class="boar-hero" id="achievementBoar" src="assets/boar_study.png" alt="Chúa tể heo rừng" />
+        <div class="achieve-top-row">
+          <div class="achieve-left">
+            <div class="achieve-date" id="achieveDate"></div>
+            <input type="text" class="achieve-editable" id="achieveTitle" placeholder="✏️ Đặt tên buổi học...">
+          </div>
+          <img class="boar-hero boar-hero-sm" id="achievementBoar" src="assets/boar_study.png" alt="Chúa tể heo rừng" />
+        </div>
         <div class="achievement-title">🏆 Thành tích hôm nay</div>
-        <div class="diamond-row" id="diamondRow">◇◇◇</div>
-        <p class="achievement-live" id="todayStudyText">Hôm nay đã học <b>0</b> phút</p>
+        <div class="achieve-stats-row">
+          <div class="diamond-row" id="diamondRow">◇◇◇</div>
+          <p class="achievement-live" id="todayStudyText">⏱ <b>0</b> phút</p>
+        </div>
         <div class="mission-list">
           <div class="mission-item" id="missionTask1">
             <div>🎯 4 lựa chọn hoàn hảo — 1 lần</div>
-            <b id="missionTask1State">0 / 1</b>
+            <div class="mission-emojis" id="missionTask1Emojis"></div>
           </div>
           <div class="mission-item" id="missionTask2">
             <div>🔥 4 lựa chọn ≥80% — 3 lần</div>
-            <b id="missionTask2State">0 / 3</b>
+            <div class="mission-emojis" id="missionTask2Emojis"></div>
           </div>
           <div class="mission-item" id="missionTask3">
             <div>⚡ Ghép cặp trong thời gian — 3 lần</div>
-            <b id="missionTask3State">0 / 3</b>
+            <div class="mission-emojis" id="missionTask3Emojis"></div>
           </div>
         </div>
+        <div class="unit-progress-section" id="unitProgressSection"></div>
       </div>
       <nav class="bottom-dock">
         <button class="dock-btn" data-dock="home">🏠<span>首頁</span></button>
+        <button class="dock-btn" data-dock="review">💔<span>錯題</span></button>
         <button class="dock-btn active" data-dock="achievement">🏆<span>成就</span></button>
         <button class="dock-btn" data-dock="help">📘<span>說明</span></button>
       </nav>
@@ -116,6 +133,7 @@
       </div>
       <div class="toolbar" id="flashGridToolbar">
         <button class="secondary-btn" id="shuffleFlashBtn">換一組 / Đổi nhóm</button>
+        <button class="info-btn" id="flashInfoBtn">💡 說明</button>
       </div>
       <div class="flash-grid-wrap active" id="flashGridWrap">
         <div class="flash-grid" id="flashGrid"></div>
@@ -138,11 +156,11 @@
     <div class="safe">
       <header class="topbar">
         <button class="icon-btn" data-action="menu">‹</button>
-        <div class="topbar-title">🧠 四選一</div>
+        <div class="topbar-title" id="quizTitle">🧠 四選一</div>
         <button class="icon-btn" data-action="settings">⚙</button>
       </header>
       <div class="countdown hidden" id="quizCountdown"></div>
-      <div class="timer-box">
+      <div class="timer-box" id="quizTimerBox">
         <div class="timer-meta">
           <span id="quizTimerText">2:00</span>
           <span id="quizProgressText">1 / 1</span>
@@ -261,6 +279,21 @@
         <button class="difficulty-btn" data-quiz-difficulty="easy"><b>簡單 / Dễ</b><small>2:30</small></button>
         <button class="difficulty-btn" data-quiz-difficulty="normal"><b>普通 / Vừa</b><small>2:00</small></button>
         <button class="difficulty-btn" data-quiz-difficulty="hard"><b>困難 / Khó</b><small>1:30</small></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="flashInfoModal">
+    <div class="sheet-backdrop" id="flashInfoBackdrop"></div>
+    <div class="sheet-panel card">
+      <div class="sheet-header">
+        <div>💡 使用說明 / Hướng dẫn</div>
+        <button class="icon-btn" id="closeFlashInfoBtn">✕</button>
+      </div>
+      <div style="padding:4px 0 8px;line-height:1.7;font-size:14px;color:var(--sub)">
+        <p>可以練習看著單字說出越南文跟中文。如果忘記發音，可以從「設定」打開發音，跟著聲音練習喔！</p>
+        <p>Bạn có thể luyện tập nhìn vào chữ và nói ra tiếng Việt và tiếng Trung. Nếu quên cách phát âm, hãy bật phát âm trong「Cài đặt」và luyện theo âm thanh nhé！</p>
+        <p style="color:var(--ink);font-size:13px">⌨️ Phím tắt: ← Cần luyện ｜ → Biết rồi ｜ Space: Lật thẻ</p>
       </div>
     </div>
   </div>
