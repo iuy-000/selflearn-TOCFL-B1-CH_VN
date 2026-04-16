@@ -8,30 +8,20 @@
 </head>
 <body>
 <div id="app">
-  <section class="screen active" id="homeScreen">
+  <section class="screen" id="homeScreen">
     <div class="safe">
       <div class="card quote-box">
         <p class="quote-zh" id="quoteZh"></p>
         <p class="quote-vi" id="quoteVi"></p>
       </div>
-      <div class="card hero-box home-main-card">
+      <div class="card hero-box">
         <h1>B1的單字練習網頁</h1>
         <p class="byline">website design by @dajiangshan999</p>
-        <label class="label" for="unitSelect">選擇單元<br>Chọn bài</label>
+        <label class="label" for="unitSelect">選擇單元 / Chọn bài</label>
         <div class="select-wrap">
           <select id="unitSelect"></select>
         </div>
-        <button class="primary-btn" id="startBtn">開始遊戲<br>Bắt đầu</button>
-        <div class="home-progress-card">
-          <div class="home-progress-head">
-            <b>單元熟悉度</b>
-            <small>Mức độ quen thuộc</small>
-          </div>
-          <div class="home-familiarity-line" id="homeFamiliarityText">0%</div>
-          <div class="chart-wrap">
-            <svg id="familiarityChart" viewBox="0 0 320 120" preserveAspectRatio="none"></svg>
-          </div>
-        </div>
+        <button class="primary-btn" id="startBtn">開始 / Bắt đầu</button>
       </div>
       <nav class="bottom-dock">
         <button class="dock-btn active" data-dock="home">🏠<span>首頁</span></button>
@@ -42,12 +32,17 @@
     </div>
   </section>
 
-  <section class="screen" id="menuScreen">
+  <section class="screen active" id="menuScreen">
     <div class="safe">
-      <div class="menu-top card menu-only-card">
-        <div class="menu-top-row menu-top-row-simple">
-          <div class="menu-unit-wrap grow">
-            <label class="label" for="menuUnitSelect">單元<br>Bài</label>
+      <div class="menu-top card">
+        <div class="menu-quote">
+          <p class="quote-zh" id="menuQuoteZh"></p>
+          <p class="quote-vi" id="menuQuoteVi"></p>
+        </div>
+        <div class="menu-top-row">
+          <div class="menu-unit-wrap">
+            <label class="label" for="menuUnitSelect">單元
+Bài</label>
             <div class="select-wrap compact">
               <select id="menuUnitSelect"></select>
             </div>
@@ -62,7 +57,7 @@
         <button class="menu-btn" data-mode="quiz"><span>🧠</span><b>四選一</b><small>4 lựa chọn</small></button>
         <button class="menu-btn" data-mode="match"><span>🧩</span><b>配對</b><small>Ghép cặp</small></button>
       </div>
-<nav class="bottom-dock">
+      <nav class="bottom-dock">
         <button class="dock-btn" data-dock="home">🏠<span>首頁</span></button>
         <button class="dock-btn active" data-dock="menu">🎮<span>遊戲</span></button>
         <button class="dock-btn" data-dock="achievement">🏆<span>成就</span></button>
@@ -75,7 +70,7 @@
     <div class="safe">
       <header class="topbar">
         <button class="icon-btn" data-action="back">‹</button>
-        <div class="topbar-title">📘 使用說明<br>Hướng dẫn</div>
+        <div class="topbar-title">📘 使用說明 / Hướng dẫn</div>
         <div class="icon-spacer"></div>
       </header>
       <article class="article card" id="helpArticle"></article>
@@ -92,45 +87,50 @@
     <div class="safe">
       <header class="topbar">
         <button class="icon-btn" data-action="back">‹</button>
-        <div class="topbar-title">🏆 Thành tích hôm nay</div>
+        <div class="topbar-title">🏆 本日成就 / Thành tích hôm nay</div>
         <div class="icon-spacer"></div>
       </header>
-      <div class="card achievement-card share-card compact-achievement">
-        <div class="achievement-date" id="achievementDate"></div>
-        <div class="achievement-head compact-head">
-          <div class="achievement-summary">
-            <div class="achievement-live" id="todayStudyText">Hôm nay đã học 0 phút</div>
-            <div class="achievement-progress-wrap">
-              <div class="achievement-progress-meta">
-                <span>Tiến độ nhiệm vụ</span>
-                <span id="achievementProgressText">0 / 3</span>
-              </div>
-              <div class="achievement-progress-track"><div class="achievement-progress-fill" id="achievementProgressFill"></div></div>
-            </div>
+      <div class="card achievement-card share-card">
+        <div class="achievement-head">
+          <div>
+            <h2>🏆 本日成就<br>Thành tích hôm nay</h2>
+            <p class="achievement-live" id="todayStudyText">Hôm nay đã học 0 phút<br>本日學習 0 分鐘</p>
           </div>
-          <img class="boar-img study-boar clean-boar" id="achievementBoar" src="assets/boar_study.png" alt="Chúa tể heo rừng" />
+          <img class="boar-img study-boar" id="achievementBoar" src="assets/boar_study.png" alt="Chúa tể heo rừng" />
         </div>
-        <div class="mission-list compact-mission-list">
-          <div class="mission-item" id="missionQuizViZh">
-            <div>
-              <div class="mission-title">🧠 Việt → 中文</div>
-              <small>4 lựa chọn 1 lần</small>
-            </div>
-            <div class="mission-right"><span class="diamond off" id="diamondQuizViZh">💎</span><b id="missionQuizViZhState">0 / 1</b></div>
+        <div class="achievement-grid">
+          <div class="mini-card time-card">
+            <div class="mini-label">⏱️ Thời gian học hôm nay<br>本日學習時間</div>
+            <div class="mini-value" id="todayStudyValue">0 phút<br>0 分鐘</div>
           </div>
-          <div class="mission-item" id="missionQuizZhVi">
-            <div>
-              <div class="mission-title">🧠 中文 → Việt</div>
-              <small>4 lựa chọn 1 lần</small>
-            </div>
-            <div class="mission-right"><span class="diamond off" id="diamondQuizZhVi">💎</span><b id="missionQuizZhViState">0 / 1</b></div>
+          <div class="mini-card task-card diamond-card">
+            <div class="mini-label">💎 Nhiệm vụ hôm nay<br>今日任務</div>
+            <div class="diamond-row" id="diamondRow">◇ ◇ ◇</div>
+          </div>
+        </div>
+        <div class="mission-list">
+          <div class="mission-item" id="missionFlash">
+            <div>🥓 Lật thẻ đơn 1 lần<br>單張翻牌完成 1 次</div><b id="missionFlashState">0 / 1</b>
+          </div>
+          <div class="mission-item" id="missionQuiz">
+            <div>🥩 4 lựa chọn thường 2 lần<br>普通四選一完成 2 次</div><b id="missionQuizState">0 / 2</b>
           </div>
           <div class="mission-item" id="missionMatch">
-            <div>
-              <div class="mission-title">🧩 Ghép cặp</div>
-              <small>3 lần</small>
-            </div>
-            <div class="mission-right"><span class="diamond off" id="diamondMatch">💎</span><b id="missionMatchState">0 / 3</b></div>
+            <div>🍖 Ghép cặp 3 lần<br>配對完成 3 次</div><b id="missionMatchState">0 / 3</b>
+          </div>
+        </div>
+        <div class="achievement-grid rewards-grid">
+          <div class="mini-card">
+            <div class="mini-label">🥩 4 lựa chọn<br>四選一</div>
+            <div class="reward-row meat-row" id="quizRewardRow"></div>
+          </div>
+          <div class="mini-card">
+            <div class="mini-label">🍖 Ghép cặp<br>配對</div>
+            <div class="reward-row meat-row" id="matchRewardRow"></div>
+          </div>
+          <div class="mini-card">
+            <div class="mini-label">🥓 Lật thẻ<br>翻卡</div>
+            <div class="reward-row meat-row" id="flashRewardRow"></div>
           </div>
         </div>
       </div>
@@ -286,10 +286,10 @@
     <div class="sheet-backdrop" id="wrongBackdrop"></div>
     <div class="sheet-panel card">
       <div class="sheet-header">
-        <div>💔 錯題<br>Lỗi sai</div>
+        <div>💔 錯題 / Lỗi sai</div>
         <button class="icon-btn" id="closeWrongBtn">✕</button>
       </div>
-      <div id="wrongList" class="wrong-list-scroll"></div>
+      <div id="wrongList"></div>
       <button class="primary-btn" id="retryWrongBtn">再玩一次 / Làm lại</button>
     </div>
   </div>
@@ -298,7 +298,7 @@
     <div class="sheet-backdrop" id="boarBackdrop"></div>
     <div class="boar-card card">
       <img class="boar-img" id="boarModalImg" src="assets/boar_happy.png" alt="">
-      <h3 id="boarModalTitle">Chúa tể heo rừng<br>山豬大王</h3>
+      <h3 id="boarModalTitle">Chúa tể heo rừng / 山豬大王</h3>
       <p id="boarModalText"></p>
       <button class="primary-btn" id="closeBoarBtn">好 / OK</button>
     </div>
