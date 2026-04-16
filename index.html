@@ -10,8 +10,6 @@
 <div id="app">
   <section class="screen active" id="homeScreen">
     <div class="safe">
-      <button class="ghost-top" id="homeHelpBtn">📘 使用說明</button>
-      <button class="ghost-top secondary" id="homeAchieveBtn">🏆 本日成就</button>
       <div class="card quote-box">
         <p class="quote-zh" id="quoteZh"></p>
         <p class="quote-vi" id="quoteVi"></p>
@@ -25,6 +23,16 @@
         </div>
         <button class="primary-btn" id="startBtn">開始 / Bắt đầu</button>
       </div>
+      <div class="bottom-stack">
+        <button class="action-bar primary" id="homeAchieveBtn">🏆 本日成就 / Thành tích hôm nay</button>
+        <button class="action-bar" id="homeHelpBtn">📘 使用說明 / Hướng dẫn</button>
+      </div>
+      <nav class="bottom-dock">
+        <button class="dock-btn active" data-dock="home">🏠<span>首頁</span></button>
+        <button class="dock-btn" data-dock="menu">🎮<span>遊戲</span></button>
+        <button class="dock-btn" data-dock="achievement">🏆<span>成就</span></button>
+        <button class="dock-btn" data-dock="help">📘<span>說明</span></button>
+      </nav>
     </div>
   </section>
 
@@ -36,15 +44,21 @@
         <button class="icon-btn" data-action="settings">⚙</button>
       </header>
       <div class="menu-grid">
-        <button class="menu-btn" data-mode="wordlist"><span>🔊</span><b>單字表</b><small>Từ vựng</small></button>
+        <button class="menu-btn" data-mode="wordlist"><span>🔊</span><b>單字表</b><small>Danh sách từ vựng</small></button>
         <button class="menu-btn" data-mode="flash"><span>🃏</span><b>翻卡</b><small>Lật thẻ</small></button>
         <button class="menu-btn" data-mode="quiz"><span>🧠</span><b>四選一</b><small>4 lựa chọn</small></button>
         <button class="menu-btn" data-mode="match"><span>🧩</span><b>配對</b><small>Ghép cặp</small></button>
       </div>
-      <div class="menu-bottom">
-        <button class="secondary-btn" id="menuHelpBtn">📘 使用說明</button>
-        <button class="secondary-btn" id="menuAchieveBtn">🏆 本日成就</button>
+      <div class="bottom-stack">
+        <button class="action-bar primary" id="menuAchieveBtn">🏆 本日成就 / Thành tích hôm nay</button>
+        <button class="action-bar" id="menuHelpBtn">📘 使用說明 / Hướng dẫn</button>
       </div>
+      <nav class="bottom-dock">
+        <button class="dock-btn" data-dock="home">🏠<span>首頁</span></button>
+        <button class="dock-btn active" data-dock="menu">🎮<span>遊戲</span></button>
+        <button class="dock-btn" data-dock="achievement">🏆<span>成就</span></button>
+        <button class="dock-btn" data-dock="help">📘<span>說明</span></button>
+      </nav>
     </div>
   </section>
 
@@ -56,6 +70,12 @@
         <div class="icon-spacer"></div>
       </header>
       <article class="article card" id="helpArticle"></article>
+      <nav class="bottom-dock">
+        <button class="dock-btn" data-dock="home">🏠<span>首頁</span></button>
+        <button class="dock-btn" data-dock="menu">🎮<span>遊戲</span></button>
+        <button class="dock-btn" data-dock="achievement">🏆<span>成就</span></button>
+        <button class="dock-btn active" data-dock="help">📘<span>說明</span></button>
+      </nav>
     </div>
   </section>
 
@@ -63,23 +83,40 @@
     <div class="safe">
       <header class="topbar">
         <button class="icon-btn" data-action="back">‹</button>
-        <div class="topbar-title">🏆 本日成就</div>
+        <div class="topbar-title">🏆 本日成就 / Thành tích hôm nay</div>
         <div class="icon-spacer"></div>
       </header>
       <div class="card achievement-card">
-        <img class="boar-img" id="achievementBoar" src="assets/boar_proud.png" alt="山豬大王" />
-        <h2>山豬大王養成中</h2>
-        <p id="todayStudyText">本日學習 0 分鐘</p>
-        <div class="stats-list">
-          <div class="stat-row"><span>🧠 四選一</span><strong id="todayQuizCount">0 次</strong></div>
-          <div class="reward-row" id="quizRewardRow"></div>
-          <div class="stat-row"><span>🧩 配對</span><strong id="todayMatchCount">0 次</strong></div>
-          <div class="reward-row" id="matchRewardRow"></div>
-          <div class="stat-row"><span>🃏 翻卡</span><strong id="todayFlashCount">0 次</strong></div>
-          <div class="reward-row" id="flashRewardRow"></div>
+        <img class="boar-img" id="achievementBoar" src="assets/boar_study.png" alt="Chúa tể heo rừng" />
+        <h2>Chúa tể heo rừng / 山豬大王</h2>
+        <p class="achievement-live" id="todayStudyText">Hôm nay đã học 0 phút / 本日學習 0 分鐘</p>
+        <div class="achievement-block">
+          <div class="achievement-label">⏱️ Thời gian học hôm nay / 本日學習時間</div>
+          <div class="achievement-value" id="todayStudyValue">0 phút / 0 分鐘</div>
         </div>
-        <p class="small-note">🍖 肉多多、練習多多，朝著 B1 肌肉山豬帥哥前進！</p>
+        <div class="achievement-block">
+          <div class="achievement-label">🧠 Hoàn thành 4 lựa chọn / 完成四選一</div>
+          <div class="achievement-value" id="todayQuizCount">0 lần / 0 次</div>
+          <div class="reward-row meat-row" id="quizRewardRow"></div>
+        </div>
+        <div class="achievement-block">
+          <div class="achievement-label">🧩 Hoàn thành ghép cặp / 完成配對</div>
+          <div class="achievement-value" id="todayMatchCount">0 lần / 0 次</div>
+          <div class="reward-row meat-row" id="matchRewardRow"></div>
+        </div>
+        <div class="achievement-block">
+          <div class="achievement-label">🃏 Hoàn thành lật thẻ / 完成翻卡</div>
+          <div class="achievement-value" id="todayFlashCount">0 lần / 0 次</div>
+          <div class="reward-row meat-row" id="flashRewardRow"></div>
+        </div>
+        <p class="small-note">🍖 Càng luyện nhiều, Chúa tể heo rừng càng mạnh hơn / 練越多，山豬大王越強壯</p>
       </div>
+      <nav class="bottom-dock">
+        <button class="dock-btn" data-dock="home">🏠<span>首頁</span></button>
+        <button class="dock-btn" data-dock="menu">🎮<span>遊戲</span></button>
+        <button class="dock-btn active" data-dock="achievement">🏆<span>成就</span></button>
+        <button class="dock-btn" data-dock="help">📘<span>說明</span></button>
+      </nav>
     </div>
   </section>
 
@@ -135,7 +172,7 @@
       <div class="countdown hidden" id="quizCountdown"></div>
       <div class="timer-box">
         <div class="timer-meta">
-          <span id="quizTimerText">1:30</span>
+          <span id="quizTimerText">2:00</span>
           <span id="quizProgressText">1 / 1</span>
         </div>
         <div class="timer-track"><div class="timer-fill" id="quizTimerFill"></div></div>
@@ -143,8 +180,8 @@
       <div class="card quiz-card">
         <div class="quiz-prompt" id="quizPrompt"></div>
         <div class="quiz-pinyin" id="quizPromptPinyin"></div>
-        <div class="quiz-options" id="quizOptions"></div>
         <div class="quiz-feedback" id="quizFeedback"></div>
+        <div class="quiz-options" id="quizOptions"></div>
       </div>
       <div class="result-sheet hidden" id="quizResultSheet">
         <img class="boar-img" id="quizBoar" src="assets/boar_happy.png" alt="">
@@ -175,7 +212,7 @@
         <div class="timer-track"><div class="timer-fill" id="matchTimerFill"></div></div>
       </div>
       <div class="match-board" id="matchBoard"></div>
-      <div class="result-sheet hidden" id="matchResultSheet">
+      <div class="result-sheet hidden framed-result" id="matchResultSheet">
         <img class="boar-img" id="matchBoar" src="assets/boar_happy.png" alt="">
         <h2 id="matchResultTitle">完成</h2>
         <p id="matchResultText"></p>
@@ -238,14 +275,11 @@
     <div class="sheet-backdrop" id="boarBackdrop"></div>
     <div class="boar-card card">
       <img class="boar-img" id="boarModalImg" src="assets/boar_happy.png" alt="">
-      <h3 id="boarModalTitle">山豬大王</h3>
+      <h3 id="boarModalTitle">Chúa tể heo rừng / 山豬大王</h3>
       <p id="boarModalText"></p>
       <button class="primary-btn" id="closeBoarBtn">好 / OK</button>
     </div>
   </div>
-</div>
-<script src="data.js"></script>
-<script src="app.js"></script>
 
   <div class="settings-sheet hidden" id="quizDifficultySheet">
     <div class="sheet-backdrop" id="quizDifficultyBackdrop"></div>
@@ -258,6 +292,8 @@
       </div>
     </div>
   </div>
-
+</div>
+<script src="data.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

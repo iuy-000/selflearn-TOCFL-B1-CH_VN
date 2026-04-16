@@ -1,5 +1,5 @@
 
-const storageKey = 'b1_mobile_app_v10_1';
+const storageKey = 'b1_mobile_app_v10_2';
 const data = window.APP_DATA;
 const appState = {
   currentUnit: 1,
@@ -40,6 +40,29 @@ const appState = {
     milestoneShown: false,
   }
 };
+
+
+normalizeData();
+function normalizeData(){
+  const zhuyinRegex = /[\u3105-\u3129\u02CA\u02C7\u02CB\u02D9\u02EA\u02EB]/g;
+  appState.quotes = (appState.quotes || []).map(q => ({zh: String(q.zh || '').trim(), vi: String(q.vi || '').trim()}));
+  appState.units = (appState.units || []).map(unit => ({
+    ...unit,
+    labelZh: String(unit.labelZh || '').trim(),
+    labelVi: String(unit.labelVi || '').trim(),
+    words: (unit.words || []).map(word => {
+      const cleanZh = String(word.zh || '')
+        .replace(/（[^）]*）/g, '')
+        .replace(/\([^\)]*\)/g, '')
+        .replace(zhuyinRegex, '')
+        .replace(/\s+/g, '')
+        .trim();
+      const cleanPinyin = String(word.pinyin || '').replace(/\s+/g, ' ').trim();
+      const cleanVi = String(word.vi || '').replace(/\s+/g, ' ').trim();
+      return {...word, zh: cleanZh, pinyin: cleanPinyin, vi: cleanVi};
+    })
+  }));
+}
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => [...document.querySelectorAll(sel)];
@@ -98,6 +121,7 @@ const el = {
   matchRewardRow: $('#matchRewardRow'),
   flashRewardRow: $('#flashRewardRow'),
   quizDifficultySheet: $('#quizDifficultySheet'),
+  todayStudyValue: $('#todayStudyValue'),
 };
 
 function initToday(){
@@ -141,8 +165,15 @@ function showScreen(id,push=true){
   $('#'+id).classList.add('active');
   if(push && appState.screenHistory[appState.screenHistory.length-1] !== id) appState.screenHistory.push(id);
   appState.currentScreen = id;
+  updateDock(id);
   if(id === 'achievementScreen') renderAchievement();
 }
+function updateDock(id){
+  const map = {homeScreen:'home', menuScreen:'menu', achievementScreen:'achievement', helpScreen:'help'};
+  const active = map[id];
+  $$('.dock-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.dock === active));
+}
+
 function goBack(){
   closeSettings();
   if(appState.currentScreen === 'homeScreen') return;
@@ -166,18 +197,16 @@ function renderMenu(){ el.menuTitle.textContent = `單元 ${appState.currentUnit
 function renderHelp(){
   const total = appState.units.reduce((sum, u) => sum + u.words.length, 0);
   el.helpArticle.innerHTML = `
-    <h2>📘 Hướng dẫn sử dụng</h2>
+    <h2>📘 Hướng dẫn</h2>
     <h3>📚 Về bài học</h3>
     <p>Hệ thống này gồm tổng cộng <b>${total}</b> từ vựng TOCFL B1, được chia thành <b>35 bài</b> để bạn có thể luyện tập từng phần.</p>
     <p>💡 Gợi ý: Mỗi ngày chỉ cần học khoảng <b>15 phút</b>, luyện tập thường xuyên sẽ hiệu quả hơn học trong thời gian dài.</p>
-    <div class="sep"></div>
     <h3>🔁 Cách luyện tập</h3>
     <p><b>🔊 Danh sách từ vựng</b><br/>Kết nối âm thanh và chữ viết. Nhấn vào từ để nghe phát âm và có thể đọc theo.</p>
-    <p><b>🃏 Lật thẻ</b><br/>Lặp lại để ghi nhớ. Từng thẻ để luyện nhận diện chữ; nhiều thẻ để luyện khả năng nhìn và nhận biết nhanh.</p>
+    <p><b>🃏 Lật thẻ</b><br/>Lặp lại để ghi nhớ. Phiên bản từng thẻ: luyện nhận diện chữ. Phiên bản nhiều thẻ: luyện khả năng nhìn nhanh.</p>
     <p><b>🧠 Trò chơi 4 lựa chọn</b><br/>Kiểm tra xem bạn đã nhớ chưa.</p>
-    <p><b>🧩 Ghép cặp</b><br/>Luyện phản xạ khi nhận diện từ trong bảng.</p>
+    <p><b>🧩 Ghép cặp</b><br/>Luyện phản xạ khi nhận diện từ trong bảng, hoàn thành trong thời gian giới hạn.</p>
     <p><b>💔 Lỗi sai</b><br/>Khi bạn làm sai trong trò chơi, từ đó sẽ xuất hiện 💔. Càng nhiều 💔 nghĩa là bạn càng chưa quen. Làm đúng một lần sẽ giảm một 💔. Bạn cũng có thể vào “Cài đặt” để đặt lại 💔.</p>
-    <div class="sep"></div>
     <h3>🧠 Vì sao học theo cách này?</h3>
     <p>Trước tiên: tiếp nhận kiến thức (kết nối thị giác + thính giác + ý nghĩa). Sau đó: lặp lại và sử dụng (luyện tập, kiểm tra, phản xạ). Khi hai bước này lặp lại nhiều lần, sẽ hình thành trí nhớ tự nhiên.</p>
     <h3>🚀 Mục tiêu</h3>
@@ -189,14 +218,12 @@ function renderHelp(){
     <h3>📚 關於單元</h3>
     <p>這個系統整理了 TOCFL B1 的單字，總共 <b>${total}</b> 個，並分成 <b>35 個單元</b>，讓學生可以分批練習。</p>
     <p>💡 建議：每天花約 <b>15 分鐘</b> 練習，高頻率的練習會比長時間練習更有效。</p>
-    <div class="sep"></div>
     <h3>🔁 練習方式</h3>
     <p><b>🔊 單字表</b><br/>連結聲音與文字。按單字會有發音，可以跟讀。</p>
     <p><b>🃏 翻卡</b><br/>反覆練習，建立記憶。單張版本：練習認字；多張版本：練習瀏覽。</p>
     <p><b>🧠 四選一</b><br/>檢查自己是否記得。</p>
     <p><b>🧩 配對</b><br/>訓練在表格中出現單字時的反應速度。</p>
     <p><b>💔 心碎（錯題）</b><br/>在遊戲中答錯會在單字表中出現 💔。越多代表越不熟；在遊戲中答對一次，就會減少一顆 💔；也可以在「設定」重新歸零 💔。</p>
-    <div class="sep"></div>
     <h3>🧠 為什麼這樣學？</h3>
     <p>先輸入知識（連結視覺、聽覺與理解），再反覆使用（練習、測驗、反應）。當這兩件事情不斷重複，就會慢慢形成肌肉記憶。</p>
     <h3>🚀 最終目標</h3>
@@ -289,6 +316,14 @@ function renderFlashSingle(){
       <div class="single-sub">${w.vi}</div>
     </div>
   `;
+  const sideKey = `${w.id}-${appState.flash.singleFlipped ? 'back' : 'front'}-${appState.settings.reverseDirection ? 'vi' : 'zh'}`;
+  if(appState.flash.lastSpokenKey !== sideKey){
+    appState.flash.lastSpokenKey = sideKey;
+    setTimeout(() => {
+      if(appState.flash.singleFlipped){ maybeSpeakFlashBack(w); }
+      else { maybeSpeakFlashFront(w); }
+    }, 140);
+  }
 }
 function resetFlashSingle(){
   appState.flash.singleWords = shuffle(currentWords());
@@ -296,6 +331,7 @@ function resetFlashSingle(){
   appState.flash.singleFlipped = false;
   appState.flash.singleDone = false;
   appState.flash.currentTranslate = 0;
+  appState.flash.lastSpokenKey = '';
   renderFlashSingle();
 }
 function stepFlash(known){
@@ -304,7 +340,21 @@ function stepFlash(known){
   appState.flash.singleIndex += 1;
   appState.flash.singleFlipped = false;
   appState.flash.currentTranslate = 0;
+  appState.flash.lastSpokenKey = '';
   renderFlashSingle();
+}
+function speakByLanguage(text, isVietnamese){
+  if(isVietnamese){
+    if(appState.settings.viAudio) speakSequence([{text, lang:'vi-VN'}]);
+  }else{
+    if(appState.settings.zhAudio) speakSequence([{text, lang:'zh-TW'}]);
+  }
+}
+function speakFlashPair(word){
+  const items = [];
+  if(appState.settings.viAudio) items.push({text: word.vi, lang:'vi-VN'});
+  if(appState.settings.zhAudio) items.push({text: word.zh, lang:'zh-TW'});
+  speakSequence(items);
 }
 function maybeSpeakFlashBack(word){
   if(appState.settings.reverseDirection){
@@ -313,14 +363,21 @@ function maybeSpeakFlashBack(word){
     if(appState.settings.viAudio) speakSequence([{text: word.vi, lang:'vi-VN'}]);
   }
 }
+function maybeSpeakFlashFront(word){
+  if(appState.settings.reverseDirection){
+    if(appState.settings.viAudio) speakSequence([{text: word.vi, lang:'vi-VN'}]);
+  }else{
+    if(appState.settings.zhAudio) speakSequence([{text: word.zh, lang:'zh-TW'}]);
+  }
+}
 function toggleSingleFlip(){
   const w = appState.flash.singleWords[appState.flash.singleIndex];
   if(!w) return;
   appState.flash.singleFlipped = !appState.flash.singleFlipped;
   vibrate(15);
   renderFlashSingle();
-  if(appState.flash.singleFlipped) setTimeout(()=>maybeSpeakFlashBack(w), 180);
 }
+
 
 
 function getQuizDuration(level){
@@ -347,7 +404,6 @@ function startQuiz(onlyWrong=false, difficulty=appState.quiz.difficulty || 'norm
   stopSpeech();
   appState.quiz.difficulty = difficulty;
   appState.quiz.duration = getQuizDuration(difficulty);
-  appState.today.quizWins += 1; saveState();
   buildQuizQueue(onlyWrong);
   appState.quiz.remaining = appState.quiz.duration;
   appState.quiz.active = false;
@@ -423,6 +479,7 @@ function finishQuiz(){
   el.quizResultTitle.textContent = pass ? 'Thành công / 成功' : 'Thất bại / 失敗';
   el.quizResultText.textContent = `答對 ${appState.quiz.score} 題，共 ${currentWords().length} 題｜${getQuizDifficultyLabel(appState.quiz.difficulty)}`;
   el.quizResultSheet.classList.remove('hidden');
+  appState.today.quizWins += 1;
   saveState();
 }
 
@@ -453,7 +510,6 @@ function renderMatch(){
 }
 function startMatch(){
   stopQuiz();
-  appState.today.matchWins += 1; saveState();
   buildMatchBoard();
   renderMatch();
   appState.match.remaining = appState.match.duration;
@@ -523,6 +579,7 @@ function finishMatch(success, timeout){
     el.matchResultText.textContent = '沒關係，再試一次！';
   }
   el.matchResultSheet.classList.remove('hidden');
+  appState.today.matchWins += 1;
   saveState();
 }
 
@@ -565,7 +622,7 @@ function speakSequence(items){
     u.lang = item.lang;
     u.rate = 0.9;
     setTimeout(()=>window.speechSynthesis.speak(u), delay);
-    delay += 380;
+    delay += 430;
   });
 }
 function stopSpeech(){ if('speechSynthesis' in window) window.speechSynthesis.cancel(); }
@@ -584,25 +641,27 @@ function updateStudyTime(){
   const delta = Math.min(5, Math.floor((now - appState.study.lastTick)/1000));
   if(delta > 0){ appState.today.seconds += delta; appState.study.lastTick = now; saveState(); }
   const mins = Math.floor(appState.today.seconds / 60);
+  if(appState.currentScreen === 'achievementScreen') renderAchievement();
   if(mins >= 15 && !appState.study.milestoneShown){
     appState.study.milestoneShown = true;
-    openBoarModal('assets/boar_proud.png','山豬大王','今天學習了15分鐘了！你好棒！');
+    openBoarModal('assets/boar_proud.png','Chúa tể heo rừng / 山豬大王','今天學習了15分鐘了！你好棒！');
   }
 }
 function renderAchievement(){
   const mins = Math.floor(appState.today.seconds / 60);
-  el.todayStudyText.textContent = `本日學習 ${mins} 分鐘`;
-  el.todayQuizCount.textContent = `${appState.today.quizWins} 次`;
-  el.todayMatchCount.textContent = `${appState.today.matchWins} 次`;
-  el.todayFlashCount.textContent = `${appState.today.flashPlays} 次`;
+  el.todayStudyText.textContent = `Hôm nay đã học ${mins} phút / 本日學習 ${mins} 分鐘`;
+  el.todayStudyValue.textContent = `${mins} phút / ${mins} 分鐘`;
+  el.todayQuizCount.textContent = `${appState.today.quizWins} lần / ${appState.today.quizWins} 次`;
+  el.todayMatchCount.textContent = `${appState.today.matchWins} lần / ${appState.today.matchWins} 次`;
+  el.todayFlashCount.textContent = `${appState.today.flashPlays} lần / ${appState.today.flashPlays} 次`;
   el.quizRewardRow.textContent = '🥩'.repeat(Math.min(appState.today.quizWins, 20));
   el.matchRewardRow.textContent = '🍖'.repeat(Math.min(appState.today.matchWins, 20));
   el.flashRewardRow.textContent = '🥓'.repeat(Math.min(appState.today.flashPlays, 20));
-  el.achievementBoar.src = mins >= 15 ? 'assets/boar_proud.png' : (appState.today.quizWins + appState.today.matchWins >= 4 ? 'assets/boar_happy.png' : 'assets/boar_sad.png');
+  el.achievementBoar.src = mins >= 15 ? 'assets/boar_proud.png' : 'assets/boar_study.png';
 }
 function openBoarModal(img,title,text){
   el.boarModalImg.src = img;
-  el.boarModalTitle.textContent = title;
+  el.boarModalTitle.textContent = title || 'Chúa tể heo rừng / 山豬大王';
   el.boarModalText.textContent = text;
   el.boarModal.classList.remove('hidden');
 }
@@ -616,6 +675,11 @@ function bindEvents(){
   };
   $('#homeHelpBtn').onclick = $('#menuHelpBtn').onclick = () => { renderHelp(); showScreen('helpScreen'); };
   $('#homeAchieveBtn').onclick = $('#menuAchieveBtn').onclick = () => showScreen('achievementScreen');
+  $$('.dock-btn').forEach(btn => btn.onclick = () => {
+    const map = {home:'homeScreen', menu:'menuScreen', achievement:'achievementScreen', help:'helpScreen'};
+    if(btn.dataset.dock === 'help') renderHelp();
+    showScreen(map[btn.dataset.dock]);
+  });
   $$('[data-action="home"]').forEach(b => b.onclick = () => showScreen('homeScreen'));
   $$('[data-action="back"]').forEach(b => b.onclick = goBack);
   $$('[data-action="menu"]').forEach(b => b.onclick = () => { stopQuiz(); stopMatch(); showScreen('menuScreen'); });
@@ -654,11 +718,7 @@ function bindEvents(){
     card.classList.toggle('flipped');
     const word = appState.flash.gridWords.find(w=>w.id===card.dataset.flashId);
     if(card.classList.contains('flipped') && word){
-      if(appState.settings.reverseDirection){
-        if(appState.settings.zhAudio) speakSequence([{text: word.zh, lang:'zh-TW'}]);
-      }else{
-        if(appState.settings.viAudio) speakSequence([{text: word.vi, lang:'vi-VN'}]);
-      }
+      speakFlashPair(word);
       vibrate(12);
     }
   });
