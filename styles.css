@@ -194,7 +194,6 @@ input:checked + .slider:before{transform:translateX(21px)}
 .mission-item.done b{color:#42704b}
 .meat-row{font-size:20px;line-height:1.2;min-height:32px}
 .bottom-dock .dock-btn[data-dock="achievement"]{position:relative}
-.bottom-dock .dock-btn[data-dock="achievement"]::after{content:"★";position:absolute;top:4px;right:6px;font-size:10px;color:#d88f1b;opacity:.85}
 .result-sheet h2,.result-sheet p{margin:6px 0}
 .result-sheet p{line-height:1.45}
 .boar-card{background:#fffaf6;border:1px solid var(--line);border-radius:28px;box-shadow:var(--shadow)}
@@ -239,3 +238,12 @@ input:checked + .slider:before{transform:translateX(21px)}
 
 /* Flash info button */
 .info-btn{background:transparent;border:1.5px dashed var(--line);border-radius:18px;padding:10px 14px;color:var(--sub);font-size:14px;flex-shrink:0}
+
+/* Streak */
+.streak-row{font-size:14px;color:var(--sub);text-align:center;width:100%}
+.streak-row b{color:var(--accent)}
+
+/* Site footer */
+.site-footer{text-align:center;padding:20px 16px 28px;font-size:11px;color:var(--sub);line-height:1.8;opacity:0.7}
+.site-footer a{color:var(--accent);text-decoration:none;font-weight:600}
+.site-footer a:hover{text-decoration:underline}

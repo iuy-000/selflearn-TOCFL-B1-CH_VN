@@ -13,6 +13,8 @@ const appState = {
     haptic: true,
   },
   hearts: {},
+  practiced: {},
+  streak: { count: 0, lastDate: '' },
   today: initToday(),
   quotes: data.quotes,
   units: data.units,
@@ -145,6 +147,9 @@ function loadState(){
     const saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
     if(saved.settings) Object.assign(appState.settings, saved.settings);
     if(saved.hearts) appState.hearts = saved.hearts;
+    if(saved.practiced) appState.practiced = saved.practiced;
+    if(saved.streak) appState.streak = saved.streak;
+    if(typeof saved.milestoneShown === 'boolean') appState.study.milestoneShown = saved.milestoneShown;
     if(saved.today && saved.today.date === initToday().date) appState.today = saved.today;
   }catch(e){}
 }
@@ -152,6 +157,9 @@ function saveState(){
   localStorage.setItem(storageKey, JSON.stringify({
     settings: appState.settings,
     hearts: appState.hearts,
+    practiced: appState.practiced,
+    streak: appState.streak,
+    milestoneShown: appState.study.milestoneShown,
     today: appState.today
   }));
 }
@@ -282,8 +290,28 @@ function unitFamiliarity(unitId){
   const unit = appState.units.find(u=>u.unit===unitId);
   if(!unit) return 0;
   const words = unit.words;
-  const known = words.filter(w=>(appState.hearts[w.id]||0)===0).length;
-  return Math.round((known/words.length)*100);
+  // Only count words that have been practiced at least once AND currently have 0 hearts
+  const known = words.filter(w => appState.practiced[w.id] && (appState.hearts[w.id]||0)===0).length;
+  return Math.round((known / words.length) * 100);
+}
+
+function markPracticed(wordId){
+  appState.practiced[wordId] = true;
+}
+
+function updateStreak(){
+  const today = initToday().date;
+  if(appState.streak.lastDate === today) return; // already updated today
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yDate = yesterday.toISOString().slice(0, 10);
+  if(appState.streak.lastDate === yDate){
+    appState.streak.count += 1; // consecutive day
+  } else {
+    appState.streak.count = 1; // streak broken or first time
+  }
+  appState.streak.lastDate = today;
+  saveState();
 }
 
 function buildFlashGrid(){
@@ -376,6 +404,7 @@ function resetFlashSingle(){
 }
 function stepFlash(known){
   const w = appState.flash.singleWords[appState.flash.singleIndex];
+  if(w) markPracticed(w.id);
   if(known && w) changeHeart(w.id, -1);
   appState.flash.singleIndex += 1;
   appState.flash.singleFlipped = false;
@@ -502,6 +531,7 @@ function handleQuizAnswer(id){
     if(btn.dataset.quiz === id && id !== word.id) btn.classList.add('wrong');
     btn.disabled = true;
   });
+  markPracticed(word.id);
   if(correct){
     appState.quiz.score += 1;
     changeHeart(word.id, -1);
@@ -543,19 +573,19 @@ function finishQuiz(timeUp=false){
   let title, boarSrc;
   if(timeUp){
     title='時間到！還不夠熟悉喔 @@\nHết giờ! Cần luyện thêm nha!';
-    boarSrc='assets/boar_tired.png';
+    boarSrc='assets/boar_confused_think.png';
   } else if(accuracy===1 && asked>0){
     title='太完美了！🌟\nHoàn hảo tuyệt đối!';
-    boarSrc='assets/boar_proud.png';
+    boarSrc='assets/boar_study_victory.png';
   } else if(accuracy>=0.8){
     title='很棒喔！🎉\nGiỏi lắm!';
-    boarSrc='assets/boar_happy.png';
+    boarSrc='assets/boar_fridge_empty_full.png';
   } else if(accuracy>=0.5){
     title='哎呀！再一次一定可以的！💪\nCố lên! Lần sau chắc chắn được!';
-    boarSrc='assets/boar_sad.png';
+    boarSrc='assets/boar_confused_think.png';
   } else {
     title='先回翻卡區練習一下再回來吧，慢慢來 🐗\nHãy luyện lật thẻ rồi thử lại nhé!';
-    boarSrc='assets/boar_sad.png';
+    boarSrc='assets/boar_angry_cry_locked.png';
   }
   el.quizBoar.src = boarSrc;
   triggerBoarPop(el.quizBoar);
@@ -572,7 +602,7 @@ function startReviewQuiz(){
   let wrongWords = [];
   appState.units.forEach(u=>u.words.forEach(w=>{if(wrongIds.has(w.id)) wrongWords.push(w);}));
   if(!wrongWords.length){
-    openBoarModal('assets/boar_happy.png','🐗 山豬大王','今天還沒有錯題！\n繼續練習來挑戰看看吧！🎉\n\nHôm nay chưa có từ sai!\nHãy luyện tập và thử thách nhé!');
+    openBoarModal('assets/boar_rich_eyes.png','🐗 山豬大王','今天還沒有錯題！\n繼續練習來挑戰看看吧！🎉\n\nHôm nay chưa có từ sai!\nHãy luyện tập và thử thách nhé!');
     return;
   }
   stopMatch(); stopSpeech();
@@ -602,7 +632,7 @@ function finishReviewQuiz(){
   stopQuiz();
   const asked = appState.quiz.asked;
   const score = appState.quiz.score;
-  el.quizBoar.src = 'assets/boar_happy.png';
+  el.quizBoar.src = 'assets/boar_boba.png';
   triggerBoarPop(el.quizBoar);
   el.quizResultTitle.textContent = '辛苦了！🧋';
   el.quizResultText.textContent = `今天學會了很多新單字！\nRất cố gắng! Hôm nay bạn đã học được nhiều từ mới!\n✅ ${score}／${asked} 題`;
@@ -679,6 +709,7 @@ function handleMatch(key){
   first.selected = false;
   if(first.pair === card.pair && first.type !== card.type){
     const wordId = card.pair;
+    markPracticed(wordId);
     changeHeart(wordId, -1);
     first.matched = true; card.matched = true;
     appState.match.matched += 1;
@@ -700,15 +731,15 @@ function finishMatch(success, timeout){
   stopMatch();
   triggerBoarPop(el.matchBoar);
   if(success){
-    el.matchBoar.src = 'assets/boar_happy.png';
+    el.matchBoar.src = 'assets/boar_fridge_empty_full.png';
     el.matchResultTitle.textContent = '成功 / Thành công';
     el.matchResultText.textContent = '山豬大王得到肉肉了！';
   } else if(timeout){
-    el.matchBoar.src = 'assets/boar_tired.png';
+    el.matchBoar.src = 'assets/boar_confused_think.png';
     el.matchResultTitle.textContent = '時間到 / Hết giờ';
     el.matchResultText.textContent = '差一點！再試一次！';
   } else {
-    el.matchBoar.src = 'assets/boar_sad.png';
+    el.matchBoar.src = 'assets/boar_angry_cry_locked.png';
     el.matchResultTitle.textContent = '失敗 / Thất bại';
     el.matchResultText.textContent = '沒關係，再試一次！';
   }
@@ -775,14 +806,14 @@ function updateStudyTime(){
   const todayDate = initToday().date;
   if(appState.today.date !== todayDate){ appState.today = initToday(); appState.study.milestoneShown = false; saveState(); }
   const delta = Math.min(5, Math.floor((now - appState.study.lastTick)/1000));
-  if(delta > 0){ appState.today.seconds += delta; appState.study.lastTick = now; saveState(); }
+  if(delta > 0){ appState.today.seconds += delta; appState.study.lastTick = now; updateStreak(); saveState(); }
   const mins = Math.floor(appState.today.seconds / 60);
   if(appState.currentScreen === 'achievementScreen') renderAchievement();
   if(mins >= 15 && !appState.study.milestoneShown){
     appState.study.milestoneShown = true;
     const encouragements = ['我會繼續加油的！💪\nTôi sẽ cố gắng tiếp!','我是最棒的！🌟\nTôi giỏi nhất!','我愛學中文！❤️\nTôi yêu học tiếng Trung!','繼續衝！🔥\nTiếp tục nào!'];
     const btnText = encouragements[Math.floor(Math.random()*encouragements.length)];
-    openBoarModal('assets/boar_proud.png','🐗 山豬大王說','今天學習了15分鐘！\n你好棒喔！🌟\n\nHôm nay bạn đã học 15 phút!\nBạn thật giỏi!', btnText);
+    openBoarModal('assets/boar_study_victory.png','🐗 山豬大王說','今天學習了15分鐘！\n你好棒喔！🌟\n\nHôm nay bạn đã học 15 phút!\nBạn thật giỏi!', btnText);
   }
 }
 
@@ -821,10 +852,12 @@ function renderAchievement(){
   const task3Done = Math.min(appState.today.matchSuccesses || 0, 3);
   const diamonds = (task1Done >= 1 ? 1 : 0) + (task2Done >= 3 ? 1 : 0) + (task3Done >= 3 ? 1 : 0);
   el.todayStudyText.innerHTML = `⏱ <b>${mins}</b> phút`;
-  if(el.diamondRow) el.diamondRow.textContent = '💎'.repeat(diamonds) + '◇'.repeat(3 - diamonds);
+  if(el.diamondRow) el.diamondRow.innerHTML =
+    '<span>💎</span>'.repeat(diamonds) +
+    '<span style="filter:grayscale(1) opacity(0.25)">💎</span>'.repeat(3 - diamonds);
 
   // Emoji progress for missions
-  renderEmojiProgress('missionTask1Emojis', '💎', task1Done, 1);
+  renderEmojiProgress('missionTask1Emojis', '🍗', task1Done, 1);
   renderEmojiProgress('missionTask2Emojis', '🥩', task2Done, 3);
   renderEmojiProgress('missionTask3Emojis', '🍖', task3Done, 3);
 
@@ -833,7 +866,16 @@ function renderAchievement(){
   document.getElementById('missionTask3').classList.toggle('done', task3Done >= 3);
 
   // Boar state based on diamonds
-  el.achievementBoar.src = diamonds >= 3 ? 'assets/boar_proud.png' : diamonds >= 1 ? 'assets/boar_happy.png' : 'assets/boar_study.png';
+  el.achievementBoar.src = diamonds >= 3 ? 'assets/boar_study_victory.png' : diamonds >= 1 ? 'assets/boar_fridge_empty_full.png' : 'assets/boar_confused_think.png';
+
+  // Streak
+  const streakEl = document.getElementById('streakRow');
+  if(streakEl){
+    const s = appState.streak.count || 0;
+    streakEl.innerHTML = s >= 2
+      ? `🔥 <b>${s}</b> ngày liên tiếp / 連續 <b>${s}</b> 天`
+      : `🌱 Ngày đầu tiên / 第一天`;
+  }
 
   // Date and editable title
   document.getElementById('achieveDate').textContent = formatDate();
@@ -853,7 +895,7 @@ function checkTaskRewards(source){
   }
   if(source === 'match' && (appState.today.matchSuccesses || 0) === 3) messages.push('💎 Hoàn thành nhiệm vụ ghép cặp!');
   if(messages.length){
-    openBoarModal('assets/boar_proud.png', 'Chúa tể heo rừng\n山豬大王', '眼睛發亮！拿到鑽石了！\n' + messages.join('\n'));
+    openBoarModal('assets/boar_study_victory.png', 'Chúa tể heo rừng\n山豬大王', '眼睛發亮！拿到鑽石了！\n' + messages.join('\n'));
   }
 }
 
@@ -924,11 +966,10 @@ function bindEvents(){
     }
   });
 
-  el.flashSingleCard.addEventListener('click', toggleSingleFlip);
   let dragging = false;
   el.flashSingleCard.addEventListener('pointerdown', (e)=>{ dragging=true; appState.flash.dragStartX = e.clientX; appState.flash.currentTranslate = 0; el.flashSingleCard.setPointerCapture(e.pointerId); });
   el.flashSingleCard.addEventListener('pointermove', (e)=>{
-    if(!dragging || appState.flash.singleFlipped || appState.flash.singleDone) return;
+    if(!dragging || appState.flash.singleDone) return;
     appState.flash.currentTranslate = e.clientX - appState.flash.dragStartX;
     renderFlashSingle();
   });
@@ -938,7 +979,9 @@ function bindEvents(){
     if(Math.abs(dx) > 90){
       vibrate(20);
       stepFlash(dx > 0);
-    }else{
+    } else if(Math.abs(dx) < 10){
+      toggleSingleFlip();
+    } else {
       appState.flash.currentTranslate = 0; renderFlashSingle();
     }
   });
