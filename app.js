@@ -80,8 +80,7 @@ const el = {
   startBtn: $('#startBtn'),
   helpArticle: $('#helpArticle'),
   wordlistContainer: $('#wordlistContainer'),
-  menuTitle: $('#menuTitle'),
-  flashGrid: $('#flashGrid'),
+    flashGrid: $('#flashGrid'),
   flashProgress: $('#flashProgress'),
   flashSingleCard: $('#flashSingleCard'),
   flashReplayBtn: $('#flashReplayBtn'),
@@ -239,11 +238,8 @@ function renderMenu(){
   const q = appState.quotes[Math.floor(Math.random()*appState.quotes.length)];
   const shortZh = (q.zh || '').split(/[，,。]/)[0].trim();
   const shortVi = (q.vi || '').split(/[,.]/)[0].trim();
-  const mini = [shortZh, shortVi].filter(Boolean).join('<br>');
-  const titleZh = currentUnitObj()?.labelZh || `單元 ${appState.currentUnit}`;
-  const titleVi = currentUnitObj()?.labelVi || `Bài ${appState.currentUnit}`;
-  if(el.menuMiniQuote) el.menuMiniQuote.innerHTML = mini || '今天多看一眼';
-  if(el.menuTitle) el.menuTitle.innerHTML = `${titleZh}<br>${titleVi}`;
+  const mini = [shortZh, shortVi ? `<small>${shortVi}</small>` : ''].filter(Boolean).join('<br>');
+  if(el.menuMiniQuote) el.menuMiniQuote.innerHTML = mini || '今天多看一眼<br><small>Hôm nay nhìn thêm một chút</small>';
   if(el.menuUnitSelect){
     el.menuUnitSelect.innerHTML = appState.units.map(u => `<option value="${u.unit}">${u.labelZh} · ${u.labelVi}</option>`).join('');
     el.menuUnitSelect.value = appState.currentUnit;
@@ -736,6 +732,8 @@ function bindEvents(){
     showScreen('menuScreen');
   }; }
   if(el.menuUnitSelect){ el.menuUnitSelect.onchange = () => { appState.currentUnit = Number(el.menuUnitSelect.value); renderMenu(); }; }
+  const menuStartBtn = $('#menuStartBtn');
+  if(menuStartBtn){ menuStartBtn.onclick = () => { appState.currentUnit = Number(el.menuUnitSelect.value || appState.currentUnit); renderMenu(); vibrate(12); }; }
   $$('.dock-btn').forEach(btn => btn.onclick = () => {
     const map = {menu:'menuScreen', achievement:'achievementScreen', help:'helpScreen'};
     if(btn.dataset.dock === 'help') renderHelp();
