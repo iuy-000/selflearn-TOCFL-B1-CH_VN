@@ -67,9 +67,17 @@ function normalizeData(){
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => [...document.querySelectorAll(sel)];
 
+
+function normalizeText(s){ return String(s||'').replace(/\s+/g,' ').trim(); }
+function normalizeZh(s){ return normalizeText(s).replace(/（[^）]*）/g,'').replace(/\([^)]*\)/g,'').replace(/[ㄅ-ㄩˊˇˋ˙ˊˇˋ˙]/g,'').replace(/\s+/g,'').trim(); }
+appState.units.forEach(u=>{u.words.forEach(w=>{w.zh=normalizeZh(w.zh); w.pinyin=normalizeText(w.pinyin); w.vi=normalizeText(w.vi);});});
+
 const el = {
   quoteZh: $('#quoteZh'),
   quoteVi: $('#quoteVi'),
+  menuQuoteZh: $('#menuQuoteZh'),
+  menuQuoteVi: $('#menuQuoteVi'),
+  menuUnitSelect: $('#menuUnitSelect'),
   unitSelect: $('#unitSelect'),
   startBtn: $('#startBtn'),
   helpArticle: $('#helpArticle'),
@@ -122,6 +130,10 @@ const el = {
   flashRewardRow: $('#flashRewardRow'),
   quizDifficultySheet: $('#quizDifficultySheet'),
   todayStudyValue: $('#todayStudyValue'),
+  diamondRow: $('#diamondRow'),
+  missionFlashState: $('#missionFlashState'),
+  missionQuizState: $('#missionQuizState'),
+  missionMatchState: $('#missionMatchState'),
 };
 
 function initToday(){
@@ -132,6 +144,8 @@ function initToday(){
     quizWins: 0,
     matchWins: 0,
     flashPlays: 0,
+    flashSingleCompletions: 0,
+    normalQuizWins: 0,
   };
 }
 function loadState(){
@@ -167,6 +181,7 @@ function showScreen(id,push=true){
   appState.currentScreen = id;
   updateDock(id);
   if(id === 'achievementScreen') renderAchievement();
+  if(id === 'menuScreen') renderHome();
 }
 function updateDock(id){
   const map = {homeScreen:'home', menuScreen:'menu', achievementScreen:'achievement', helpScreen:'help'};
@@ -189,10 +204,16 @@ function renderHome(){
   const q = appState.quotes[Math.floor(Math.random()*appState.quotes.length)];
   el.quoteZh.textContent = q.zh;
   el.quoteVi.textContent = q.vi;
+  if(el.menuQuoteZh) el.menuQuoteZh.textContent = q.zh;
+  if(el.menuQuoteVi) el.menuQuoteVi.textContent = q.vi;
+  const options = appState.units.map(u => `<option value="${u.unit}">${u.labelZh}<br>${u.labelVi}</option>`).join('');
   el.unitSelect.innerHTML = appState.units.map(u => `<option value="${u.unit}">${u.labelZh} / ${u.labelVi}</option>`).join('');
+  if(el.menuUnitSelect) el.menuUnitSelect.innerHTML = appState.units.map(u => `<option value="${u.unit}">${u.labelZh} · ${u.labelVi}</option>`).join('');
   el.unitSelect.value = appState.currentUnit;
+  if(el.menuUnitSelect) el.menuUnitSelect.value = appState.currentUnit;
 }
-function renderMenu(){ el.menuTitle.textContent = `單元 ${appState.currentUnit} / Bài ${appState.currentUnit}`; }
+
+function renderMenu(){ el.menuTitle.innerHTML = `單元 ${appState.currentUnit}<br>Bài ${appState.currentUnit}`; if(el.menuUnitSelect) el.menuUnitSelect.value = appState.currentUnit; }
 
 function renderHelp(){
   const total = appState.units.reduce((sum, u) => sum + u.words.length, 0);
@@ -242,7 +263,7 @@ function renderWordlist(){
       <div class="word-head">
         <div>
           <div class="word-main">${w.zh} <span class="word-voice">🔊</span></div>
-          <div class="word-pinyin">${w.pinyin || ''}</div>
+          <div class="word-pinyin">${(w.pinyin || '').trim()}</div>
           <div class="word-vi">${w.vi}</div>
         </div>
         ${heartMarkup(w.id)}
@@ -285,6 +306,7 @@ function renderFlash(){
       appState.flash.singleIndex = 0;
       appState.flash.singleFlipped = false;
       appState.flash.singleDone = false;
+      appState.flash.markedDone = false;
       appState.today.flashPlays += 1; saveState();
     }
     renderFlashSingle();
@@ -295,6 +317,7 @@ function renderFlashSingle(){
   const i = appState.flash.singleIndex;
   const w = appState.flash.singleWords[i];
   if(!w){
+    if(!appState.flash.markedDone){ appState.today.flashSingleCompletions += 1; appState.flash.markedDone = true; saveState(); checkTaskRewards('flash'); }
     appState.flash.singleDone = true;
     el.flashReplayBtn.classList.remove('hidden');
     el.flashProgress.textContent = `完成 / Hoàn thành`;
@@ -380,12 +403,13 @@ function toggleSingleFlip(){
 
 
 
-function getQuizDuration(level){
-  return ({easy:150, normal:120, hard:90})[level] || 120;
-}
-function getQuizDifficultyLabel(level){
-  return ({easy:'簡單 / Dễ · 2:30', normal:'普通 / Vừa · 2:00', hard:'困難 / Khó · 1:30'})[level] || '普通 / Vừa · 2:00';
-}
+function getQuizDuration(level){ return ({easy:180, normal:120, hard:90})[level] || 120; }
+function getQuizDifficultyLabel(level){ return ({easy:`簡單
+Dễ · 3:00`, normal:`普通
+Vừa · 2:00`, hard:`困難
+Khó · 1:30`})[level] || `普通
+Vừa · 2:00`; }
+function getQuizFeedbackDelay(level){ return ({easy:1200, normal:900, hard:600})[level] || 900; }
 function openQuizDifficulty(){
   el.quizDifficultySheet.classList.remove('hidden');
 }
@@ -469,7 +493,8 @@ function handleQuizAnswer(id){
     el.quizFeedback.innerHTML = `<div>答錯了 / Sai rồi</div><div>${word.zh}｜${word.vi}｜${word.pinyin}</div>`;
   }
   renderWordlist();
-  setTimeout(()=>{ appState.quiz.active = true; nextQuizQuestion(); }, 800);
+  const delay = getQuizFeedbackDelay(appState.quiz.difficulty);
+  setTimeout(()=>{ appState.quiz.active = true; nextQuizQuestion(); }, delay);
 }
 function stopQuiz(){ if(appState.quiz.timer){ clearInterval(appState.quiz.timer); appState.quiz.timer = null; } appState.quiz.active = false; }
 function finishQuiz(){
@@ -480,7 +505,9 @@ function finishQuiz(){
   el.quizResultText.textContent = `答對 ${appState.quiz.score} 題，共 ${currentWords().length} 題｜${getQuizDifficultyLabel(appState.quiz.difficulty)}`;
   el.quizResultSheet.classList.remove('hidden');
   appState.today.quizWins += 1;
+  if(appState.quiz.difficulty === 'normal') appState.today.normalQuizWins += 1;
   saveState();
+  checkTaskRewards('quiz');
 }
 
 function selectMatchWords(pairCount=9){
@@ -581,6 +608,7 @@ function finishMatch(success, timeout){
   el.matchResultSheet.classList.remove('hidden');
   appState.today.matchWins += 1;
   saveState();
+  checkTaskRewards('match');
 }
 
 function openWrongModal(){
@@ -644,24 +672,41 @@ function updateStudyTime(){
   if(appState.currentScreen === 'achievementScreen') renderAchievement();
   if(mins >= 15 && !appState.study.milestoneShown){
     appState.study.milestoneShown = true;
-    openBoarModal('assets/boar_proud.png','Chúa tể heo rừng / 山豬大王','今天學習了15分鐘了！你好棒！');
+    openBoarModal('assets/boar_proud.png','Chúa tể heo rừng\n山豬大王','今天學習了15分鐘了！你好棒！\nHôm nay bạn đã học 15 phút rồi!');
   }
 }
 function renderAchievement(){
   const mins = Math.floor(appState.today.seconds / 60);
-  el.todayStudyText.textContent = `Hôm nay đã học ${mins} phút / 本日學習 ${mins} 分鐘`;
-  el.todayStudyValue.textContent = `${mins} phút / ${mins} 分鐘`;
-  el.todayQuizCount.textContent = `${appState.today.quizWins} lần / ${appState.today.quizWins} 次`;
-  el.todayMatchCount.textContent = `${appState.today.matchWins} lần / ${appState.today.matchWins} 次`;
-  el.todayFlashCount.textContent = `${appState.today.flashPlays} lần / ${appState.today.flashPlays} 次`;
-  el.quizRewardRow.textContent = '🥩'.repeat(Math.min(appState.today.quizWins, 20));
-  el.matchRewardRow.textContent = '🍖'.repeat(Math.min(appState.today.matchWins, 20));
-  el.flashRewardRow.textContent = '🥓'.repeat(Math.min(appState.today.flashPlays, 20));
-  el.achievementBoar.src = mins >= 15 ? 'assets/boar_proud.png' : 'assets/boar_study.png';
+  const flashDone = Math.min(appState.today.flashSingleCompletions || 0, 1);
+  const quizDone = Math.min(appState.today.normalQuizWins || 0, 2);
+  const matchDone = Math.min(appState.today.matchWins || 0, 3);
+  const diamonds = (flashDone>=1?1:0)+(quizDone>=2?1:0)+(matchDone>=3?1:0);
+  el.todayStudyText.innerHTML = `Hôm nay đã học <b>${mins}</b> phút<br>本日學習 <b>${mins}</b> 分鐘`;
+  el.todayStudyValue.innerHTML = `${mins} phút<br>${mins} 分鐘`;
+  if(el.diamondRow) el.diamondRow.textContent = '💎'.repeat(diamonds) + '◇'.repeat(3-diamonds);
+  el.missionFlashState.textContent = `${flashDone} / 1`;
+  el.missionQuizState.textContent = `${quizDone} / 2`;
+  el.missionMatchState.textContent = `${matchDone} / 3`;
+  el.quizRewardRow.textContent = '🥩'.repeat(Math.min(appState.today.quizWins, 10));
+  el.matchRewardRow.textContent = '🍖'.repeat(Math.min(appState.today.matchWins, 10));
+  el.flashRewardRow.textContent = '🥓'.repeat(Math.min(appState.today.flashPlays, 10));
+  el.achievementBoar.src = diamonds > 0 ? 'assets/boar_proud.png' : 'assets/boar_study.png';
 }
+
+
+function checkTaskRewards(source){
+  const messages=[];
+  if(source==='flash' && (appState.today.flashSingleCompletions||0)===1) messages.push('💎 完成單張翻牌任務！\nHoàn thành nhiệm vụ lật thẻ đơn!');
+  if(source==='quiz' && (appState.today.normalQuizWins||0)===2) messages.push('💎 完成普通四選一任務！\nHoàn thành nhiệm vụ 4 lựa chọn thường!');
+  if(source==='match' && (appState.today.matchWins||0)===3) messages.push('💎 完成配對任務！\nHoàn thành nhiệm vụ ghép cặp!');
+  if(messages.length){
+    openBoarModal('assets/boar_proud.png','Chúa tể heo rừng\n山豬大王','眼睛發亮！拿到鑽石了！\n'+messages.join('\n'));
+  }
+}
+
 function openBoarModal(img,title,text){
   el.boarModalImg.src = img;
-  el.boarModalTitle.textContent = title || 'Chúa tể heo rừng / 山豬大王';
+  el.boarModalTitle.textContent = title || 'Chúa tể heo rừng\n山豬大王';
   el.boarModalText.textContent = text;
   el.boarModal.classList.remove('hidden');
 }
@@ -670,17 +715,17 @@ function closeBoarModal(){ el.boarModal.classList.add('hidden'); }
 function bindEvents(){
   $('#startBtn').onclick = () => {
     appState.currentUnit = Number(el.unitSelect.value);
+    if(el.menuUnitSelect) el.menuUnitSelect.value = appState.currentUnit;
     renderMenu();
     showScreen('menuScreen');
   };
-  $('#homeHelpBtn').onclick = $('#menuHelpBtn').onclick = () => { renderHelp(); showScreen('helpScreen'); };
-  $('#homeAchieveBtn').onclick = $('#menuAchieveBtn').onclick = () => showScreen('achievementScreen');
+  if(el.menuUnitSelect){ el.menuUnitSelect.onchange = () => { appState.currentUnit = Number(el.menuUnitSelect.value); renderMenu(); }; }
   $$('.dock-btn').forEach(btn => btn.onclick = () => {
-    const map = {home:'homeScreen', menu:'menuScreen', achievement:'achievementScreen', help:'helpScreen'};
+    const map = {home:'menuScreen', menu:'menuScreen', achievement:'achievementScreen', help:'helpScreen'};
     if(btn.dataset.dock === 'help') renderHelp();
     showScreen(map[btn.dataset.dock]);
   });
-  $$('[data-action="home"]').forEach(b => b.onclick = () => showScreen('homeScreen'));
+  $$('[data-action="home"]').forEach(b => b.onclick = () => showScreen('menuScreen'));
   $$('[data-action="back"]').forEach(b => b.onclick = goBack);
   $$('[data-action="menu"]').forEach(b => b.onclick = () => { stopQuiz(); stopMatch(); showScreen('menuScreen'); });
   $$('[data-action="settings"]').forEach(b => b.onclick = openSettings);
@@ -782,4 +827,5 @@ renderHome();
 renderMenu();
 renderHelp();
 bindEvents();
+showScreen('menuScreen', false);
 setInterval(updateStudyTime, 1000);

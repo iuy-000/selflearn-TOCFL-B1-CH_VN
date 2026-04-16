@@ -8,7 +8,7 @@
 </head>
 <body>
 <div id="app">
-  <section class="screen active" id="homeScreen">
+  <section class="screen" id="homeScreen">
     <div class="safe">
       <div class="card quote-box">
         <p class="quote-zh" id="quoteZh"></p>
@@ -23,10 +23,6 @@
         </div>
         <button class="primary-btn" id="startBtn">開始 / Bắt đầu</button>
       </div>
-      <div class="bottom-stack">
-        <button class="action-bar primary" id="homeAchieveBtn">🏆 本日成就 / Thành tích hôm nay</button>
-        <button class="action-bar" id="homeHelpBtn">📘 使用說明 / Hướng dẫn</button>
-      </div>
       <nav class="bottom-dock">
         <button class="dock-btn active" data-dock="home">🏠<span>首頁</span></button>
         <button class="dock-btn" data-dock="menu">🎮<span>遊戲</span></button>
@@ -36,22 +32,30 @@
     </div>
   </section>
 
-  <section class="screen" id="menuScreen">
+  <section class="screen active" id="menuScreen">
     <div class="safe">
-      <header class="topbar">
-        <button class="icon-btn" data-action="home">‹</button>
-        <div class="topbar-title" id="menuTitle">單元 1 / Bài 1</div>
-        <button class="icon-btn" data-action="settings">⚙</button>
-      </header>
+      <div class="menu-top card">
+        <div class="menu-quote">
+          <p class="quote-zh" id="menuQuoteZh"></p>
+          <p class="quote-vi" id="menuQuoteVi"></p>
+        </div>
+        <div class="menu-top-row">
+          <div class="menu-unit-wrap">
+            <label class="label" for="menuUnitSelect">單元
+Bài</label>
+            <div class="select-wrap compact">
+              <select id="menuUnitSelect"></select>
+            </div>
+          </div>
+          <div class="menu-unit-title" id="menuTitle">單元 1<br>Bài 1</div>
+          <button class="icon-btn" data-action="settings">⚙</button>
+        </div>
+      </div>
       <div class="menu-grid">
         <button class="menu-btn" data-mode="wordlist"><span>🔊</span><b>單字表</b><small>Danh sách từ vựng</small></button>
         <button class="menu-btn" data-mode="flash"><span>🃏</span><b>翻卡</b><small>Lật thẻ</small></button>
         <button class="menu-btn" data-mode="quiz"><span>🧠</span><b>四選一</b><small>4 lựa chọn</small></button>
         <button class="menu-btn" data-mode="match"><span>🧩</span><b>配對</b><small>Ghép cặp</small></button>
-      </div>
-      <div class="bottom-stack">
-        <button class="action-bar primary" id="menuAchieveBtn">🏆 本日成就 / Thành tích hôm nay</button>
-        <button class="action-bar" id="menuHelpBtn">📘 使用說明 / Hướng dẫn</button>
       </div>
       <nav class="bottom-dock">
         <button class="dock-btn" data-dock="home">🏠<span>首頁</span></button>
@@ -86,30 +90,49 @@
         <div class="topbar-title">🏆 本日成就 / Thành tích hôm nay</div>
         <div class="icon-spacer"></div>
       </header>
-      <div class="card achievement-card">
-        <img class="boar-img" id="achievementBoar" src="assets/boar_study.png" alt="Chúa tể heo rừng" />
-        <h2>Chúa tể heo rừng / 山豬大王</h2>
-        <p class="achievement-live" id="todayStudyText">Hôm nay đã học 0 phút / 本日學習 0 分鐘</p>
-        <div class="achievement-block">
-          <div class="achievement-label">⏱️ Thời gian học hôm nay / 本日學習時間</div>
-          <div class="achievement-value" id="todayStudyValue">0 phút / 0 分鐘</div>
+      <div class="card achievement-card share-card">
+        <div class="achievement-head">
+          <div>
+            <h2>🏆 本日成就<br>Thành tích hôm nay</h2>
+            <p class="achievement-live" id="todayStudyText">Hôm nay đã học 0 phút<br>本日學習 0 分鐘</p>
+          </div>
+          <img class="boar-img study-boar" id="achievementBoar" src="assets/boar_study.png" alt="Chúa tể heo rừng" />
         </div>
-        <div class="achievement-block">
-          <div class="achievement-label">🧠 Hoàn thành 4 lựa chọn / 完成四選一</div>
-          <div class="achievement-value" id="todayQuizCount">0 lần / 0 次</div>
-          <div class="reward-row meat-row" id="quizRewardRow"></div>
+        <div class="achievement-grid">
+          <div class="mini-card time-card">
+            <div class="mini-label">⏱️ Thời gian học hôm nay<br>本日學習時間</div>
+            <div class="mini-value" id="todayStudyValue">0 phút<br>0 分鐘</div>
+          </div>
+          <div class="mini-card task-card diamond-card">
+            <div class="mini-label">💎 Nhiệm vụ hôm nay<br>今日任務</div>
+            <div class="diamond-row" id="diamondRow">◇ ◇ ◇</div>
+          </div>
         </div>
-        <div class="achievement-block">
-          <div class="achievement-label">🧩 Hoàn thành ghép cặp / 完成配對</div>
-          <div class="achievement-value" id="todayMatchCount">0 lần / 0 次</div>
-          <div class="reward-row meat-row" id="matchRewardRow"></div>
+        <div class="mission-list">
+          <div class="mission-item" id="missionFlash">
+            <div>🥓 Lật thẻ đơn 1 lần<br>單張翻牌完成 1 次</div><b id="missionFlashState">0 / 1</b>
+          </div>
+          <div class="mission-item" id="missionQuiz">
+            <div>🥩 4 lựa chọn thường 2 lần<br>普通四選一完成 2 次</div><b id="missionQuizState">0 / 2</b>
+          </div>
+          <div class="mission-item" id="missionMatch">
+            <div>🍖 Ghép cặp 3 lần<br>配對完成 3 次</div><b id="missionMatchState">0 / 3</b>
+          </div>
         </div>
-        <div class="achievement-block">
-          <div class="achievement-label">🃏 Hoàn thành lật thẻ / 完成翻卡</div>
-          <div class="achievement-value" id="todayFlashCount">0 lần / 0 次</div>
-          <div class="reward-row meat-row" id="flashRewardRow"></div>
+        <div class="achievement-grid rewards-grid">
+          <div class="mini-card">
+            <div class="mini-label">🥩 4 lựa chọn<br>四選一</div>
+            <div class="reward-row meat-row" id="quizRewardRow"></div>
+          </div>
+          <div class="mini-card">
+            <div class="mini-label">🍖 Ghép cặp<br>配對</div>
+            <div class="reward-row meat-row" id="matchRewardRow"></div>
+          </div>
+          <div class="mini-card">
+            <div class="mini-label">🥓 Lật thẻ<br>翻卡</div>
+            <div class="reward-row meat-row" id="flashRewardRow"></div>
+          </div>
         </div>
-        <p class="small-note">🍖 Càng luyện nhiều, Chúa tể heo rừng càng mạnh hơn / 練越多，山豬大王越強壯</p>
       </div>
       <nav class="bottom-dock">
         <button class="dock-btn" data-dock="home">🏠<span>首頁</span></button>
@@ -183,7 +206,7 @@
         <div class="quiz-feedback" id="quizFeedback"></div>
         <div class="quiz-options" id="quizOptions"></div>
       </div>
-      <div class="result-sheet hidden" id="quizResultSheet">
+      <div class="result-sheet framed-result hidden" id="quizResultSheet">
         <img class="boar-img" id="quizBoar" src="assets/boar_happy.png" alt="">
         <h2 id="quizResultTitle">完成</h2>
         <p id="quizResultText"></p>
