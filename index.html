@@ -8,7 +8,7 @@
 </head>
 <body>
 <div id="app">
-  <section class="screen hidden-home" id="homeScreen">
+  <section class="screen active" id="homeScreen">
     <div class="safe">
       <div class="card quote-box">
         <p class="quote-zh" id="quoteZh"></p>
@@ -33,8 +33,9 @@
           </div>
         </div>
       </div>
-      <nav class="bottom-dock dock-3">
-        <button class="dock-btn active" data-dock="menu">🎮<span>遊戲</span></button>
+      <nav class="bottom-dock">
+        <button class="dock-btn active" data-dock="home">🏠<span>首頁</span></button>
+        <button class="dock-btn" data-dock="menu">🎮<span>遊戲</span></button>
         <button class="dock-btn" data-dock="achievement">🏆<span>成就</span></button>
         <button class="dock-btn" data-dock="help">📘<span>說明</span></button>
       </nav>
@@ -43,18 +44,15 @@
 
   <section class="screen" id="menuScreen">
     <div class="safe">
-      <div class="menu-top card menu-only-card compact-main-card">
-        <div class="mini-quote" id="menuMiniQuote">今天多看一眼，明天就更熟一點</div>
+      <div class="menu-top card menu-only-card">
         <div class="menu-top-row menu-top-row-simple">
           <div class="menu-unit-wrap grow">
-            <label class="label slim" for="menuUnitSelect">單元
-Bài</label>
+            <label class="label" for="menuUnitSelect">單元<br>Bài</label>
             <div class="select-wrap compact">
               <select id="menuUnitSelect"></select>
             </div>
           </div>
-          <div class="menu-unit-title" id="menuTitle">單元 1
-Bài 1</div>
+          <div class="menu-unit-title" id="menuTitle">單元 1<br>Bài 1</div>
           <button class="icon-btn" data-action="settings">⚙</button>
         </div>
       </div>
@@ -64,7 +62,8 @@ Bài 1</div>
         <button class="menu-btn" data-mode="quiz"><span>🧠</span><b>四選一</b><small>4 lựa chọn</small></button>
         <button class="menu-btn" data-mode="match"><span>🧩</span><b>配對</b><small>Ghép cặp</small></button>
       </div>
-<nav class="bottom-dock dock-3">
+<nav class="bottom-dock">
+        <button class="dock-btn" data-dock="home">🏠<span>首頁</span></button>
         <button class="dock-btn active" data-dock="menu">🎮<span>遊戲</span></button>
         <button class="dock-btn" data-dock="achievement">🏆<span>成就</span></button>
         <button class="dock-btn" data-dock="help">📘<span>說明</span></button>
@@ -80,7 +79,8 @@ Bài 1</div>
         <div class="icon-spacer"></div>
       </header>
       <article class="article card" id="helpArticle"></article>
-      <nav class="bottom-dock dock-3">
+      <nav class="bottom-dock">
+        <button class="dock-btn" data-dock="home">🏠<span>首頁</span></button>
         <button class="dock-btn" data-dock="menu">🎮<span>遊戲</span></button>
         <button class="dock-btn" data-dock="achievement">🏆<span>成就</span></button>
         <button class="dock-btn active" data-dock="help">📘<span>說明</span></button>
@@ -134,7 +134,8 @@ Bài 1</div>
           </div>
         </div>
       </div>
-      <nav class="bottom-dock dock-3">
+      <nav class="bottom-dock">
+        <button class="dock-btn" data-dock="home">🏠<span>首頁</span></button>
         <button class="dock-btn" data-dock="menu">🎮<span>遊戲</span></button>
         <button class="dock-btn active" data-dock="achievement">🏆<span>成就</span></button>
         <button class="dock-btn" data-dock="help">📘<span>說明</span></button>
