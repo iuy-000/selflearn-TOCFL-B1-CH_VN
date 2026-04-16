@@ -75,6 +75,8 @@ appState.units.forEach(u=>{u.words.forEach(w=>{w.zh=normalizeZh(w.zh); w.pinyin=
 const el = {
   quoteZh: $('#quoteZh'),
   quoteVi: $('#quoteVi'),
+  menuMiniQuote: $('#menuMiniQuote'),
+  unitStatus: $('#unitStatus'),
   menuUnitSelect: $('#menuUnitSelect'),
   unitSelect: $('#unitSelect'),
   startBtn: $('#startBtn'),
@@ -236,13 +238,15 @@ function renderHome(){
 
 function renderMenu(){
   const q = appState.quotes[Math.floor(Math.random()*appState.quotes.length)];
-  const shortZh = (q.zh || '').split(/[，,。]/)[0].trim();
-  const shortVi = (q.vi || '').split(/[,.]/)[0].trim();
-  const mini = [shortZh, shortVi ? `<small>${shortVi}</small>` : ''].filter(Boolean).join('<br>');
-  if(el.menuMiniQuote) el.menuMiniQuote.innerHTML = mini || '今天多看一眼<br><small>Hôm nay nhìn thêm một chút</small>';
+  const shortZh = String(q.zh || '').trim();
+  const shortVi = String(q.vi || '').trim();
+  if(el.menuMiniQuote) el.menuMiniQuote.innerHTML = `${shortZh}<br><small>${shortVi}</small>`;
   if(el.menuUnitSelect){
     el.menuUnitSelect.innerHTML = appState.units.map(u => `<option value="${u.unit}">${u.labelZh} · ${u.labelVi}</option>`).join('');
     el.menuUnitSelect.value = appState.currentUnit;
+  }
+  if(el.unitStatus){
+    el.unitStatus.innerHTML = `已選擇 第 ${appState.currentUnit} 單元<br><small>Đã chọn Bài ${appState.currentUnit}</small>`;
   }
 }
 
@@ -731,9 +735,9 @@ function bindEvents(){
     renderMenu();
     showScreen('menuScreen');
   }; }
-  if(el.menuUnitSelect){ el.menuUnitSelect.onchange = () => { appState.currentUnit = Number(el.menuUnitSelect.value); renderMenu(); }; }
+  if(el.menuUnitSelect){ el.menuUnitSelect.onchange = () => { appState.currentUnit = Number(el.menuUnitSelect.value || 1); renderMenu(); saveState(); }; }
   const menuStartBtn = $('#menuStartBtn');
-  if(menuStartBtn){ menuStartBtn.onclick = () => { appState.currentUnit = Number(el.menuUnitSelect.value || appState.currentUnit); renderMenu(); vibrate(12); }; }
+  if(menuStartBtn){ menuStartBtn.onclick = () => { appState.currentUnit = Number(el.menuUnitSelect.value || appState.currentUnit || 1); saveState(); renderMenu(); vibrate(18); if(el.unitStatus){ el.unitStatus.classList.add('menu-mini-success'); el.unitStatus.innerHTML = `今天是第 ${appState.currentUnit} 單元<br><small>Hôm nay là Bài ${appState.currentUnit}</small>`; setTimeout(()=>{ el.unitStatus.classList.remove('menu-mini-success'); el.unitStatus.innerHTML = `已選擇 第 ${appState.currentUnit} 單元<br><small>Đã chọn Bài ${appState.currentUnit}</small>`; }, 1500); } }; }
   $$('.dock-btn').forEach(btn => btn.onclick = () => {
     const map = {menu:'menuScreen', achievement:'achievementScreen', help:'helpScreen'};
     if(btn.dataset.dock === 'help') renderHelp();
@@ -754,12 +758,16 @@ function bindEvents(){
   el.viAudioToggle.onchange = (e) => { appState.settings.viAudio = e.target.checked; saveState(); };
   el.hapticToggle.onchange = (e) => { appState.settings.haptic = e.target.checked; saveState(); };
 
-  $$('.menu-btn').forEach(btn => btn.onclick = () => {
+  document.querySelector('.menu-grid').addEventListener('click', (e) => {
+    const btn = e.target.closest('.menu-btn');
+    if(!btn) return;
+    appState.currentUnit = Number(el.menuUnitSelect?.value || appState.currentUnit || 1);
+    saveState();
     const mode = btn.dataset.mode;
-    if(mode === 'wordlist'){ renderWordlist(); showScreen('wordlistScreen'); }
-    if(mode === 'flash'){ renderFlash(); showScreen('flashScreen'); }
-    if(mode === 'quiz'){ openQuizDifficulty(); }
-    if(mode === 'match'){ startMatch(); }
+    if(mode === 'wordlist'){ renderWordlist(); showScreen('wordlistScreen'); return; }
+    if(mode === 'flash'){ renderFlash(); showScreen('flashScreen'); return; }
+    if(mode === 'quiz'){ openQuizDifficulty(); return; }
+    if(mode === 'match'){ startMatch(); return; }
   });
 
   el.wordlistContainer.addEventListener('click', (e)=>{

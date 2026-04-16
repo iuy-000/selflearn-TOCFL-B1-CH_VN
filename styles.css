@@ -265,3 +265,14 @@ input:checked + .slider:before{transform:translateX(21px)}
 
 
 .bilingual-quote{font-weight:800;font-size:18px;line-height:1.35;text-align:center}.bilingual-quote small{display:block;margin-top:6px;color:var(--sub);font-size:14px;font-weight:600}.menu-top-row-compact{grid-template-columns:minmax(0,1fr) 108px 42px;align-items:center}.menu-start-btn{padding:12px 10px;line-height:1.1;font-size:14px}.menu-grid{position:relative;z-index:2}.menu-btn{cursor:pointer}.menu-top .select-wrap.compact select{font-weight:800;font-size:16px}.menu-top .select-wrap.compact::after{right:14px}.compact-main-card{gap:10px}.menu-only-card{padding:14px}.menu-top-row-simple .label{display:none}
+
+.menu-top{position:relative;z-index:3}
+.menu-top-row-compact{grid-template-columns:minmax(0,1fr) 110px 44px;align-items:center}
+.menu-start-btn{padding:12px 10px;line-height:1.08;font-size:14px}
+.unit-status{background:#fff7f0;border:1px solid var(--line);border-radius:16px;padding:10px 12px;text-align:center;font-weight:800;line-height:1.25;color:var(--ink)}
+.unit-status small{display:block;margin-top:4px;font-size:12px;color:var(--sub);font-weight:700}
+.menu-grid{position:relative;z-index:2}
+.menu-btn{cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, background .12s ease}
+.menu-btn:active{transform:scale(.98);background:#fff7f0}
+.primary-btn:active,.secondary-btn:active,.dock-btn:active,.icon-btn:active{transform:scale(.98)}
+.menu-mini-success{background:#eef8f0;border-color:#cfe1d3;color:#42704b}
