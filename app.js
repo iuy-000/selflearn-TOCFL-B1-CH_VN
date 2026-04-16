@@ -40,7 +40,6 @@ const appState = {
   study: {
     startedAt: Date.now(),
     lastTick: Date.now(),
-    milestoneShown: false,
   }
 };
 
@@ -140,6 +139,7 @@ function initToday(){
     sessionTitle: '',
     studiedUnits: [],
     wrongWordIds: [],
+    milestoneShown: false,
   };
 }
 function loadState(){
@@ -149,7 +149,6 @@ function loadState(){
     if(saved.hearts) appState.hearts = saved.hearts;
     if(saved.practiced) appState.practiced = saved.practiced;
     if(saved.streak) appState.streak = saved.streak;
-    if(typeof saved.milestoneShown === 'boolean') appState.study.milestoneShown = saved.milestoneShown;
     if(saved.today && saved.today.date === initToday().date) appState.today = saved.today;
   }catch(e){}
 }
@@ -159,7 +158,6 @@ function saveState(){
     hearts: appState.hearts,
     practiced: appState.practiced,
     streak: appState.streak,
-    milestoneShown: appState.study.milestoneShown,
     today: appState.today
   }));
 }
@@ -564,10 +562,10 @@ function finishQuiz(timeUp=false){
   const asked = appState.quiz.asked;
   const score = appState.quiz.score;
   const accuracy = asked > 0 ? score/asked : 0;
-  if(asked > 0 && appState.quiz.wrongItems.length === 0){
+  if(!timeUp && asked > 0 && appState.quiz.wrongItems.length === 0){
     appState.today.perfectQuizDone = (appState.today.perfectQuizDone||0)+1;
   }
-  if(asked > 0 && accuracy >= 0.8){
+  if(!timeUp && asked > 0 && accuracy >= 0.8){
     appState.today.goodQuizCount = (appState.today.goodQuizCount||0)+1;
   }
   let title, boarSrc;
@@ -579,7 +577,7 @@ function finishQuiz(timeUp=false){
     boarSrc='assets/boar_study_victory.png';
   } else if(accuracy>=0.8){
     title='很棒喔！🎉\nGiỏi lắm!';
-    boarSrc='assets/boar_fridge_empty_full.png';
+    boarSrc='assets/boar_rich_eyes.png';
   } else if(accuracy>=0.5){
     title='哎呀！再一次一定可以的！💪\nCố lên! Lần sau chắc chắn được!';
     boarSrc='assets/boar_confused_think.png';
@@ -731,7 +729,7 @@ function finishMatch(success, timeout){
   stopMatch();
   triggerBoarPop(el.matchBoar);
   if(success){
-    el.matchBoar.src = 'assets/boar_fridge_empty_full.png';
+    el.matchBoar.src = 'assets/boar_rich_eyes.png';
     el.matchResultTitle.textContent = '成功 / Thành công';
     el.matchResultText.textContent = '山豬大王得到肉肉了！';
   } else if(timeout){
@@ -779,17 +777,32 @@ function countdown(target, done){
   }, 700);
 }
 
+let _voicesReady = false;
+function ensureVoices(cb){
+  const voices = window.speechSynthesis.getVoices();
+  if(voices.length){ _voicesReady = true; cb(); return; }
+  if(_voicesReady){ cb(); return; }
+  window.speechSynthesis.onvoiceschanged = () => { _voicesReady = true; cb(); };
+}
 function speakSequence(items){
   if(!('speechSynthesis' in window)) return;
+  const filtered = items.filter(i => i.text);
+  if(!filtered.length) return;
   stopSpeech();
-  let delay = 0;
-  items.forEach(item => {
-    if(!item.text) return;
-    const u = new SpeechSynthesisUtterance(item.text);
-    u.lang = item.lang;
-    u.rate = 0.9;
-    setTimeout(()=>window.speechSynthesis.speak(u), delay);
-    delay += 430;
+  ensureVoices(() => {
+    let idx = 0;
+    function speakNext(){
+      if(idx >= filtered.length) return;
+      const item = filtered[idx++];
+      const u = new SpeechSynthesisUtterance(item.text);
+      u.lang = item.lang;
+      u.rate = 0.9;
+      u.onend = speakNext;
+      // Chrome desktop bug: speechSynthesis can stall — kick it if needed
+      window.speechSynthesis.cancel();
+      setTimeout(() => window.speechSynthesis.speak(u), 50);
+    }
+    speakNext();
   });
 }
 function stopSpeech(){ if('speechSynthesis' in window) window.speechSynthesis.cancel(); }
@@ -804,13 +817,13 @@ function vibrate(pattern){ if(appState.settings.haptic && navigator.vibrate) nav
 function updateStudyTime(){
   const now = Date.now();
   const todayDate = initToday().date;
-  if(appState.today.date !== todayDate){ appState.today = initToday(); appState.study.milestoneShown = false; saveState(); }
+  if(appState.today.date !== todayDate){ appState.today = initToday(); saveState(); }
   const delta = Math.min(5, Math.floor((now - appState.study.lastTick)/1000));
   if(delta > 0){ appState.today.seconds += delta; appState.study.lastTick = now; updateStreak(); saveState(); }
   const mins = Math.floor(appState.today.seconds / 60);
   if(appState.currentScreen === 'achievementScreen') renderAchievement();
-  if(mins >= 15 && !appState.study.milestoneShown){
-    appState.study.milestoneShown = true;
+  if(mins >= 15 && !appState.today.milestoneShown){
+    appState.today.milestoneShown = true;
     const encouragements = ['我會繼續加油的！💪\nTôi sẽ cố gắng tiếp!','我是最棒的！🌟\nTôi giỏi nhất!','我愛學中文！❤️\nTôi yêu học tiếng Trung!','繼續衝！🔥\nTiếp tục nào!'];
     const btnText = encouragements[Math.floor(Math.random()*encouragements.length)];
     openBoarModal('assets/boar_study_victory.png','🐗 山豬大王說','今天學習了15分鐘！\n你好棒喔！🌟\n\nHôm nay bạn đã học 15 phút!\nBạn thật giỏi!', btnText);
@@ -866,7 +879,7 @@ function renderAchievement(){
   document.getElementById('missionTask3').classList.toggle('done', task3Done >= 3);
 
   // Boar state based on diamonds
-  el.achievementBoar.src = diamonds >= 3 ? 'assets/boar_study_victory.png' : diamonds >= 1 ? 'assets/boar_fridge_empty_full.png' : 'assets/boar_confused_think.png';
+  el.achievementBoar.src = diamonds >= 3 ? 'assets/boar_study_victory.png' : diamonds >= 1 ? 'assets/boar_rich_eyes.png' : 'assets/boar_confused_think.png';
 
   // Streak
   const streakEl = document.getElementById('streakRow');
