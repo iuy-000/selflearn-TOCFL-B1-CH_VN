@@ -785,61 +785,19 @@ function countdown(target, done){
   }, 700);
 }
 
-// Pre-load voices as early as possible (Chrome fires onvoiceschanged async)
-let _voices = [];
-if('speechSynthesis' in window){
-  _voices = window.speechSynthesis.getVoices();
-  window.speechSynthesis.onvoiceschanged = () => { _voices = window.speechSynthesis.getVoices(); };
-  // Chrome keepalive: resume if paused (tab switch etc.) — guarded for Safari
-  setInterval(() => {
-    try{ if(window.speechSynthesis.speaking && window.speechSynthesis.paused) window.speechSynthesis.resume(); }catch(e){}
-  }, 5000);
-}
-
-function getBestVoice(lang){
-  // Prefer exact match, then prefix match
-  return _voices.find(v => v.lang === lang)
-      || _voices.find(v => v.lang.startsWith(lang.split('-')[0]))
-      || null;
-}
-
 function speakSequence(items){
   if(!('speechSynthesis' in window)) return;
   const filtered = items.filter(i => i.text);
   if(!filtered.length) return;
   window.speechSynthesis.cancel();
-
-  // If voices not loaded yet, wait up to 1s then try anyway
-  function doSpeak(){
-    let idx = 0;
-    function speakNext(){
-      if(idx >= filtered.length) return;
-      const item = filtered[idx++];
-      const u = new SpeechSynthesisUtterance(item.text);
-      u.lang = item.lang;
-      u.rate = 0.9;
-      const v = getBestVoice(item.lang);
-      if(v) u.voice = v;
-      u.onend = () => setTimeout(speakNext, 100);
-      u.onerror = () => setTimeout(speakNext, 100);
-      window.speechSynthesis.speak(u);
-    }
-    speakNext();
-  }
-
-  if(_voices.length){
-    doSpeak();
-  } else {
-    // voices not ready yet — wait for them (max 1.5s)
-    const t0 = Date.now();
-    const poll = setInterval(() => {
-      _voices = window.speechSynthesis.getVoices();
-      if(_voices.length || Date.now() - t0 > 1500){
-        clearInterval(poll);
-        doSpeak();
-      }
-    }, 100);
-  }
+  let delay = 0;
+  filtered.forEach(item => {
+    const u = new SpeechSynthesisUtterance(item.text);
+    u.lang = item.lang;
+    u.rate = 0.9;
+    setTimeout(() => window.speechSynthesis.speak(u), delay);
+    delay += 600;
+  });
 }
 function stopSpeech(){ if('speechSynthesis' in window) window.speechSynthesis.cancel(); }
 function speakWordlist(word){
