@@ -1,4 +1,4 @@
-const CACHE = 'boar-vocab-v1';
+const CACHE = 'boar-vocab-v2025041701';
 const ASSETS = [
   './',
   './index.html',

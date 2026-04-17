@@ -785,6 +785,14 @@ function countdown(target, done){
   }, 700);
 }
 
+let _speechUnlocked = false;
+function unlockSpeech(){
+  if(_speechUnlocked || !('speechSynthesis' in window)) return;
+  _speechUnlocked = true;
+  const u = new SpeechSynthesisUtterance('');
+  window.speechSynthesis.speak(u);
+}
+
 function speakSequence(items){
   if(!('speechSynthesis' in window)) return;
   const filtered = items.filter(i => i.text);
@@ -916,6 +924,10 @@ function openBoarModal(img, title, text, btnText='好 / OK'){
 function closeBoarModal(){ el.boarModal.classList.add('hidden'); }
 
 function bindEvents(){
+  // Unlock speech synthesis on first user interaction (required by Chrome on desktop)
+  document.addEventListener('click', unlockSpeech, { once: true });
+  document.addEventListener('keydown', unlockSpeech, { once: true });
+
   el.unitSelect.onchange = () => { appState.currentUnit = Number(el.unitSelect.value); renderMenu(); };
 
   $$('.dock-btn').forEach(btn => btn.onclick = () => {
