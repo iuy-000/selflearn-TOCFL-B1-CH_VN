@@ -1062,12 +1062,46 @@ function bindEvents(){
   document.addEventListener('visibilitychange', ()=>{ appState.study.lastTick = Date.now(); });
 }
 
+function initLoadingScreen(){
+  const screen = document.getElementById('loadingScreen');
+  if(!screen) return;
+  const fill = document.getElementById('loadingBarFill');
+  const msgZh = document.getElementById('loadingMsgZh');
+  const msgVi = document.getElementById('loadingMsgVi');
+  const messages = [
+    {zh:'山豬大王正在暖身',vi:'Vua heo rừng đang khởi động'},
+    {zh:'正在把今天的單字搬進森林',vi:'Đang mang từ vựng hôm nay vào khu rừng'},
+    {zh:'獎勵肉肉和金幣準備好了',vi:'Thịt thưởng và tiền vàng đã sẵn sàng'},
+    {zh:'山豬準備陪你開始挑戰',vi:'Heo rừng đã sẵn sàng đồng hành cùng bạn'},
+  ];
+  let progress = 0, msgIdx = 0;
+  const msgTimer = setInterval(()=>{
+    if(!document.getElementById('loadingScreen')){ clearInterval(msgTimer); return; }
+    msgIdx = (msgIdx+1) % messages.length;
+    if(msgZh) msgZh.textContent = messages[msgIdx].zh;
+    if(msgVi) msgVi.textContent = messages[msgIdx].vi;
+  }, 600);
+  const progressTimer = setInterval(()=>{
+    progress = Math.min(100, progress + Math.random()*25 + 15);
+    if(fill) fill.style.width = progress + '%';
+    if(progress >= 100){
+      clearInterval(progressTimer);
+      clearInterval(msgTimer);
+      setTimeout(()=>{
+        screen.classList.add('fade-out');
+        setTimeout(()=>{ if(screen.parentNode) screen.remove(); }, 500);
+      }, 150);
+    }
+  }, 120);
+}
+
 loadState();
 renderHome();
 renderHelp();
 bindEvents();
 showScreen('homeScreen', false);
 setInterval(updateStudyTime, 1000);
+initLoadingScreen();
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', () => {
