@@ -13,6 +13,16 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+<div id="loadingScreen">
+  <div class="loading-content">
+    <div class="loading-boar">🐗</div>
+    <h2 class="loading-title">山豬大王來了</h2>
+    <p class="loading-sub">Vua heo rừng đến rồi</p>
+    <div class="loading-bar-wrap"><div class="loading-bar-fill" id="loadingBarFill"></div></div>
+    <p class="loading-msg-zh" id="loadingMsgZh">山豬大王正在暖身</p>
+    <p class="loading-msg-vi" id="loadingMsgVi">Vua heo rừng đang khởi động</p>
+  </div>
+</div>
 <div id="app">
 
   <section class="screen" id="homeScreen">
@@ -155,6 +165,7 @@
           <button class="swipe-btn good" id="swipeRightBtn">我會了 / Biết rồi</button>
         </div>
         <button class="secondary-btn hidden" id="flashReplayBtn">再一次 / Làm lại</button>
+        <button class="secondary-btn hidden" id="flashAchievementBtn">查看成就 / Xem thành tích</button>
       </div>
     </div>
   </section>
@@ -188,6 +199,7 @@
           <button class="primary-btn" id="quizRestartBtn">再一次 / Làm lại</button>
           <button class="secondary-btn" id="quizWrongBtn">查看錯題 / Xem lỗi</button>
           <button class="secondary-btn" id="quizMenuBtn">玩其他遊戲 / Chơi trò khác</button>
+          <button class="secondary-btn" id="quizAchievementBtn">查看成就 / Xem thành tích</button>
         </div>
       </div>
     </div>
@@ -216,6 +228,7 @@
         <div class="result-actions">
           <button class="primary-btn" id="matchRestartBtn">再一次 / Làm lại</button>
           <button class="secondary-btn" id="matchMenuBtn">玩其他遊戲 / Chơi trò khác</button>
+          <button class="secondary-btn" id="matchAchievementBtn">查看成就 / Xem thành tích</button>
         </div>
       </div>
     </div>
