@@ -11,6 +11,10 @@
   <meta name="apple-mobile-web-app-title" content="山豬單字" />
   <link rel="apple-touch-icon" href="assets/icon-192.png" />
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    #loadingScreen { animation: loadingExit 0.45s ease 1.6s forwards; }
+    @keyframes loadingExit { to { opacity: 0; pointer-events: none; visibility: hidden; } }
+  </style>
 </head>
 <body>
 <div id="loadingScreen" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;background:linear-gradient(160deg,#fde9d0 0%,#fffaf6 50%,#d8f0dd 100%);display:flex;align-items:center;justify-content:center;transition:opacity 0.5s ease;">
